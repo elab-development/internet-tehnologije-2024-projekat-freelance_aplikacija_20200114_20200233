@@ -33,4 +33,20 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+       /**
+     * Relationships
+     */
+
+    // A user can be a service seller with many projects
+    public function serviceSellerProjects()
+    {
+        return $this->hasMany(Project::class, 'service_seller_id');
+    }
+
+    // A user can be a service buyer with many requests
+    public function serviceBuyerRequests()
+    {
+        return $this->hasMany(Request::class, 'service_buyer_id');
+    }
 }

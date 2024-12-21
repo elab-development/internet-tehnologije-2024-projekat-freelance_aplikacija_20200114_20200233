@@ -15,7 +15,7 @@ class Request extends Model
      * @var array<string>
      */
     protected $fillable = [
-        'user_id',
+        'service_buyer_id',
         'project_id',
         'message',
         'status',
@@ -26,7 +26,7 @@ class Request extends Model
      */
 
     // Each request belongs to a user
-    public function user()
+    public function serviceBuyer()
     {
         return $this->belongsTo(User::class);
     }

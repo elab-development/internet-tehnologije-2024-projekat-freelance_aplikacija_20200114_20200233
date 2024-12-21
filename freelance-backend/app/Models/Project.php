@@ -15,7 +15,7 @@ class Project extends Model
      * @var array<string>
      */
     protected $fillable = [
-        'user_id',
+        'service_seller_id',
         'category_id',
         'title',
         'description',
@@ -28,7 +28,7 @@ class Project extends Model
      * Relationships
      */
 
-    public function user()
+    public function serviceSeller()
     {
         return $this->belongsTo(User::class);
     }
