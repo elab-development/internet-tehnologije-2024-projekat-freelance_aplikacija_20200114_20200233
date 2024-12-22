@@ -85,7 +85,7 @@ class ProjectFactory extends Factory
             'description' => $this->faker->paragraph(3),
             'budget' => $this->faker->randomFloat(2, 100, 10000),
             'deadline' => $this->faker->dateTimeBetween('now', '+6 months')->format('Y-m-d'),
-            'priority' => $this->faker->randomElement(['niski', 'srednji', 'visoki']),
+            'priority' => $this->faker->randomElement(['nizak', 'srednji', 'visok']),
         ];
     }
 }
