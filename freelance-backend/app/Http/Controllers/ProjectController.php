@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Http\Resources\ProjectResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,7 +23,7 @@ class ProjectController extends Controller
 
         $projects = Project::where('service_seller_id', $user->id)->get();
 
-        return response()->json($projects);
+        return ProjectResource::collection($projects);
     }
 
     /**
@@ -37,7 +38,9 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Nedozvoljen pristup: Samo kupac može da vidi sve projekte.'], 403);
         }
 
-        return response()->json(Project::paginate(10));
+        $projects = Project::paginate(10);
+
+        return ProjectResource::collection($projects);
     }
 
     /**
@@ -54,7 +57,7 @@ class ProjectController extends Controller
 
         $project = Project::findOrFail($id);
 
-        return response()->json($project);
+        return new ProjectResource($project);
     }
 
     /**
@@ -71,7 +74,7 @@ class ProjectController extends Controller
 
         $projects = Project::where('title', 'LIKE', '%' . $request->input('query') . '%')->paginate(10);
 
-        return response()->json($projects);
+        return ProjectResource::collection($projects);
     }
 
     /**
@@ -97,10 +100,10 @@ class ProjectController extends Controller
 
         $project = Project::create(array_merge($validated, [
             'service_seller_id' => $user->id,
-            'status' => 'pending', // Postavljanje početnog statusa na "pending"
+            'status' => 'pending',
         ]));
 
-        return response()->json(['message' => 'Projekat uspešno kreiran!', 'project' => $project]);
+        return response()->json(['message' => 'Projekat uspešno kreiran!', 'project' => new ProjectResource($project)]);
     }
 
     /**
@@ -127,7 +130,7 @@ class ProjectController extends Controller
 
         $project->update($validated);
 
-        return response()->json(['message' => 'Projekat uspešno ažuriran!', 'project' => $project]);
+        return response()->json(['message' => 'Projekat uspešno ažuriran!', 'project' => new ProjectResource($project)]);
     }
 
     /**
@@ -149,7 +152,7 @@ class ProjectController extends Controller
 
         $project->update($validated);
 
-        return response()->json(['message' => 'Budžet uspešno ažuriran!', 'project' => $project]);
+        return response()->json(['message' => 'Budžet uspešno ažuriran!', 'project' => new ProjectResource($project)]);
     }
 
     /**
