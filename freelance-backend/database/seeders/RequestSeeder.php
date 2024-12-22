@@ -14,11 +14,9 @@ class RequestSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get all users and projects
-        $users = User::where('role', 'normal')->get();
+        $users = User::where('role', 'kupac')->get();
         $projects = Project::all();
 
-        // Assign each user to some requests on random projects
         $users->each(function ($user) use ($projects) {
             Request::factory()->count(3)->create([
                 'service_buyer_id' => $user->id,

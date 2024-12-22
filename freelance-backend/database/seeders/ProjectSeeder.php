@@ -13,7 +13,7 @@ class ProjectSeeder extends Seeder
      */
     public function run(): void
     {
-        $users = User::where('role', 'normal')->get();
+        $users = User::where('role', 'ponudjac')->get();
 
         $users->each(function ($user) {
             Project::factory()->count(2)->create([
