@@ -28,7 +28,7 @@ class RequestController extends Controller
             'service_buyer_id' => $user->id,
             'project_id' => $projectId,
             'message' => $validated['message'],
-            'status' => 'pending',
+            'status' => 'obrada',
         ]);
 
         return response()->json([
@@ -51,7 +51,7 @@ class RequestController extends Controller
 
         $validated = $request->validate([
             'message' => 'string',
-            'status' => 'in:pending,approved,rejected',
+            'status' => 'in:obrada,odobren,odbijen',
         ]);
 
         $req->update($validated);
@@ -75,7 +75,7 @@ class RequestController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:pending,approved,rejected',
+            'status' => 'required|in:obrada,odobren,odbijen',
         ]);
 
         $req->update(['status' => $validated['status']]);

@@ -25,7 +25,7 @@ class RequestFactory extends Factory
             'service_buyer_id' => User::factory(), 
             'project_id' => Project::factory(),   
             'message' => $this->faker->paragraph(2), 
-            'status' => $this->faker->randomElement(['pending', 'approved', 'rejected']), 
+            'status' => $this->faker->randomElement(['obrada', 'odobren', 'odbijen']), 
         ];
     }
 }

@@ -13,13 +13,13 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            ['name' => 'SEO Optimization', 'description' => 'Optimize your website for search engines.'],
-            ['name' => 'Social Media Marketing', 'description' => 'Grow your presence on social media platforms.'],
-            ['name' => 'Email Marketing', 'description' => 'Design and deliver effective email campaigns.'],
-            ['name' => 'PPC Campaigns (Google Ads, Facebook Ads)', 'description' => 'Manage pay-per-click advertising campaigns.'],
-            ['name' => 'Content Marketing Strategies', 'description' => 'Develop content strategies to boost your brand.'],
-            ['name' => 'Affiliate Marketing', 'description' => 'Set up and optimize affiliate marketing programs.'],
-            ['name' => 'Influencer Marketing', 'description' => 'Leverage influencers to promote your brand.'],
+            ['name' => 'SEO Optimizacija', 'description' => 'Optimizujte svoj sajt za pretraživače.'],
+            ['name' => 'Marketing na društvenim mrežama', 'description' => 'Povećajte prisustvo na društvenim mrežama.'],
+            ['name' => 'Email marketing', 'description' => 'Dizajnirajte i isporučite efikasne email kampanje.'],
+            ['name' => 'PPC kampanje (Google Ads, Facebook Ads)', 'description' => 'Upravljajte PPC reklamnim kampanjama.'],
+            ['name' => 'Strategije content marketinga', 'description' => 'Razvijte strategije sadržaja za jačanje brenda.'],
+            ['name' => 'Affiliate marketing', 'description' => 'Postavite i optimizujte affiliate programe.'],
+            ['name' => 'Influencer marketing', 'description' => 'Iskoristite influensere za promociju vašeg brenda.'],
         ];
 
         foreach ($categories as $category) {
@@ -30,3 +30,4 @@ class CategorySeeder extends Seeder
         }
     }
 }
+

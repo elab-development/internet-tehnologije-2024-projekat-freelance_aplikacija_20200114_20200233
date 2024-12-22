@@ -13,12 +13,10 @@ class ReviewSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get all requests
         $requests = Request::all();
 
-        // Assign reviews to a subset of the requests
         $requests->each(function ($request) {
-            if (rand(0, 1)) { // Randomly decide whether to assign a review
+            if (rand(0, 1)) { 
                 Review::factory()->create([
                     'request_id' => $request->id,
                 ]);

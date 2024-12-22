@@ -100,7 +100,7 @@ class ProjectController extends Controller
 
         $project = Project::create(array_merge($validated, [
             'service_seller_id' => $user->id,
-            'status' => 'pending',
+            'status' => 'obrada',
         ]));
 
         return response()->json(['message' => 'Projekat uspešno kreiran!', 'project' => new ProjectResource($project)]);

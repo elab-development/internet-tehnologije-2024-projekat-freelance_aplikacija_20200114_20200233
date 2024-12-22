@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('service_buyer_id'); 
             $table->unsignedBigInteger('project_id'); 
             $table->text('message');
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('status', ['obrada', 'odobren', 'odbijen'])->default('obrada');
             $table->timestamps();
         });
     }

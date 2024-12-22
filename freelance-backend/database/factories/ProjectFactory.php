@@ -21,63 +21,62 @@ class ProjectFactory extends Factory
      */
     public function definition(): array
     {
-        // Define titles for each category
         $titles = [
-            'SEO Optimization' => [
-                'Boost Your Website Rankings',
-                'Complete SEO Audit Service',
-                'Keyword Research Mastery',
-                'On-Page Optimization Plan',
-                'Advanced Backlink Strategies',
+            'SEO Optimizacija' => [
+                'Poboljšajte rangiranje na pretraživačima',
+                'Kompletna SEO analiza',
+                'Majstorstvo istraživanja ključnih reči',
+                'Plan za optimizaciju na stranici',
+                'Napredne strategije za povratne linkove',
             ],
-            'Social Media Marketing' => [
-                'Instagram Growth Strategy',
-                'Facebook Engagement Campaigns',
-                'TikTok Content Calendar',
-                'Social Media Ads That Convert',
-                'Multi-Platform Social Growth Plan',
+            'Marketing na društvenim mrežama' => [
+                'Strategija rasta na Instagramu',
+                'Kampanje za angažovanje na Facebooku',
+                'Kalendar sadržaja za TikTok',
+                'Oglasi na društvenim mrežama koji konvertuju',
+                'Plan za rast na više platformi',
             ],
-            'Email Marketing' => [
-                'Custom Email Funnel Creation',
-                'Re-Engagement Campaign Design',
-                'Automated Email Marketing Setup',
-                'Newsletter Growth Strategies',
-                'Email Campaign Optimization',
+            'Email marketing' => [
+                'Prilagođeno kreiranje email toka',
+                'Dizajn kampanje za ponovno angažovanje',
+                'Automatizacija email marketinga',
+                'Strategije rasta biltena',
+                'Optimizacija email kampanja',
             ],
-            'PPC Campaigns (Google Ads, Facebook Ads)' => [
-                'Maximize ROI with Google Ads',
-                'Facebook Ads That Convert Leads',
-                'Advanced PPC Strategies',
-                'Budget Optimization for PPC',
-                'Custom Retargeting Campaigns',
+            'PPC kampanje (Google Ads, Facebook Ads)' => [
+                'Maksimizujte ROI uz Google oglase',
+                'Facebook oglasi koji konvertuju',
+                'Napredne PPC strategije',
+                'Optimizacija budžeta za PPC',
+                'Prilagođene kampanje za remarketing',
             ],
-            'Content Marketing Strategies' => [
-                'Content Strategy for Branding',
-                'SEO-Driven Blog Writing Service',
-                'Content Calendar Development',
-                'Viral Content Marketing Tactics',
-                'High-Impact Article Writing',
+            'Strategije content marketinga' => [
+                'Strategija sadržaja za brendiranje',
+                'Pisanje blogova usmerenih na SEO',
+                'Razvoj kalendara sadržaja',
+                'Taktike za viralni marketing sadržaja',
+                'Pisanje članaka visokog uticaja',
             ],
-            'Affiliate Marketing' => [
-                'Affiliate Network Management',
-                'Influencer Partnership Strategies',
-                'Growth Through Affiliate Campaigns',
-                'Tracking and Attribution Setup',
-                'Revenue Maximization with Affiliates',
+            'Affiliate marketing' => [
+                'Upravljanje mrežom partnera',
+                'Strategije partnerstva sa influenserima',
+                'Rast kroz affiliate kampanje',
+                'Postavljanje praćenja i atribucije',
+                'Maksimizacija prihoda uz affiliate',
             ],
-            'Influencer Marketing' => [
-                'Connect with Top Influencers',
-                'Brand Awareness Campaigns',
-                'Influencer Collaboration Tactics',
-                'Boost Sales with Influencer Content',
-                'Authentic Social Media Partnerships',
+            'Influencer marketing' => [
+                'Povezivanje sa vrhunskim influenserima',
+                'Kampanje za podizanje svesti o brendu',
+                'Taktike saradnje sa influenserima',
+                'Povećajte prodaju uz sadržaj influensera',
+                'Autentična partnerstva na društvenim mrežama',
             ],
         ];
 
         $category = Category::inRandomOrder()->first();
 
         $categoryName = $category->name;
-        $randomTitle = $this->faker->randomElement($titles[$categoryName] ?? ['General Project Title']);
+        $randomTitle = $this->faker->randomElement($titles[$categoryName] ?? ['Opšti naziv projekta']);
 
         return [
             'service_seller_id' => User::factory(),
@@ -86,7 +85,7 @@ class ProjectFactory extends Factory
             'description' => $this->faker->paragraph(3),
             'budget' => $this->faker->randomFloat(2, 100, 10000),
             'deadline' => $this->faker->dateTimeBetween('now', '+6 months')->format('Y-m-d'),
-            'priority' => $this->faker->randomElement(['low', 'medium', 'high']),
+            'priority' => $this->faker->randomElement(['niski', 'srednji', 'visoki']),
         ];
     }
 }

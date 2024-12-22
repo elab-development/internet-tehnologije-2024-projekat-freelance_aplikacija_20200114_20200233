@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('projects', function (Blueprint $table) {
             $table->string('deadline')->nullable()->after('budget');
-            $table->enum('priority', ['low', 'medium', 'high'])->default('low');
+            $table->enum('priority', ['nizak', 'srednji', 'visok'])->default('nizak');
         });
     }
 
