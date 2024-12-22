@@ -22,7 +22,6 @@ class ProjectResource extends JsonResource
             'budget' => $this->budget,
             'deadline' => $this->deadline,
             'priority' => $this->priority,
-            'status' => $this->status,
             'category' => new CategoryResource($this->whenLoaded('category')), 
             'service_seller' => new UserResource($this->whenLoaded('serviceSeller')), 
             'created_at' => $this->created_at->toDateTimeString(),

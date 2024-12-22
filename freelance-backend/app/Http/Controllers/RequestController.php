@@ -31,6 +31,8 @@ class RequestController extends Controller
             'status' => 'obrada',
         ]);
 
+        $newRequest->load('review'); // Load the review relationship
+
         return response()->json([
             'message' => 'Zahtev uspešno kreiran.',
             'request' => new RequestResource($newRequest),
@@ -55,6 +57,7 @@ class RequestController extends Controller
         ]);
 
         $req->update($validated);
+        $req->load('review'); // Load the review relationship
 
         return response()->json([
             'message' => 'Zahtev uspešno ažuriran.',
@@ -79,6 +82,7 @@ class RequestController extends Controller
         ]);
 
         $req->update(['status' => $validated['status']]);
+        $req->load('review'); // Load the review relationship
 
         return response()->json([
             'message' => 'Status zahteva uspešno ažuriran.',

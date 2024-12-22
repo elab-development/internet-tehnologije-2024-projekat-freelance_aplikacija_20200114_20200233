@@ -41,10 +41,6 @@ class ReviewController extends Controller
         $user = Auth::user();
         $review = Review::find($id);
 
-        if (!$review || $review->request->service_buyer_id !== $user->id) {
-            return response()->json(['error' => 'Nemate dozvolu da ažurirate ovu recenziju.'], 403);
-        }
-
         $validated = $request->validate([
             'rating' => 'integer|min:1|max:5',
             'review' => 'string',
@@ -65,10 +61,6 @@ class ReviewController extends Controller
     {
         $user = Auth::user();
         $review = Review::find($id);
-
-        if (!$review || $review->request->service_buyer_id !== $user->id) {
-            return response()->json(['error' => 'Nemate dozvolu da obrišete ovu recenziju.'], 403);
-        }
 
         $review->delete();
 

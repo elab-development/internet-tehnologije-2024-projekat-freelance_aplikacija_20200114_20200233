@@ -21,7 +21,7 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Nedozvoljen pristup: Samo ponudjač može da vidi svoje projekte.'], 403);
         }
 
-        $projects = Project::where('service_seller_id', $user->id)->get();
+        $projects = Project::where('service_seller_id', $user->id)->with(['category', 'serviceSeller'])->get();
 
         return ProjectResource::collection($projects);
     }
@@ -38,7 +38,7 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Nedozvoljen pristup: Samo kupac može da vidi sve projekte.'], 403);
         }
 
-        $projects = Project::paginate(10);
+        $projects = Project::with(['category', 'serviceSeller'])->paginate(10);
 
         return ProjectResource::collection($projects);
     }
@@ -55,7 +55,7 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Nedozvoljen pristup: Samo kupac može da vidi detalje projekta.'], 403);
         }
 
-        $project = Project::findOrFail($id);
+        $project = Project::with(['category', 'serviceSeller'])->findOrFail($id);
 
         return new ProjectResource($project);
     }
@@ -72,7 +72,9 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Nedozvoljen pristup: Samo kupac može da pretražuje projekte.'], 403);
         }
 
-        $projects = Project::where('title', 'LIKE', '%' . $request->input('query') . '%')->paginate(10);
+        $projects = Project::where('title', 'LIKE', '%' . $request->input('query') . '%')
+            ->with(['category', 'serviceSeller'])
+            ->paginate(10);
 
         return ProjectResource::collection($projects);
     }
@@ -95,13 +97,14 @@ class ProjectController extends Controller
             'description' => 'required|string',
             'budget' => 'required|numeric|min:0',
             'deadline' => 'required|date|after:today',
-            'priority' => 'required|in:low,medium,high',
+            'priority' => 'required|in:nizak,srednji,visok',
         ]);
 
         $project = Project::create(array_merge($validated, [
-            'service_seller_id' => $user->id,
-            'status' => 'obrada',
+            'service_seller_id' => $user->id
         ]));
+
+        $project->load(['category', 'serviceSeller']);
 
         return response()->json(['message' => 'Projekat uspešno kreiran!', 'project' => new ProjectResource($project)]);
     }
@@ -125,10 +128,12 @@ class ProjectController extends Controller
             'description' => 'string',
             'budget' => 'numeric|min:0',
             'deadline' => 'date|after:today',
-            'priority' => 'in:low,medium,high',
+            'priority' => 'in:nizak,srednji,visok',
         ]);
 
         $project->update($validated);
+
+        $project->load(['category', 'serviceSeller']);
 
         return response()->json(['message' => 'Projekat uspešno ažuriran!', 'project' => new ProjectResource($project)]);
     }
@@ -151,6 +156,8 @@ class ProjectController extends Controller
         ]);
 
         $project->update($validated);
+
+        $project->load(['category', 'serviceSeller']);
 
         return response()->json(['message' => 'Budžet uspešno ažuriran!', 'project' => new ProjectResource($project)]);
     }

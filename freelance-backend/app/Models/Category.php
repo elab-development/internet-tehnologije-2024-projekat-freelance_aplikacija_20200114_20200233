@@ -26,6 +26,6 @@ class Category extends Model
     // Each category has many projects
     public function projects()
     {
-        return $this->hasMany(Project::class);
+        return $this->hasMany(Project::class, 'category_id');
     }
 }
