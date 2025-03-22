@@ -4,9 +4,12 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\CategoriesController;
 
 Route::post('/register', [AuthController::class, 'register']); 
 Route::post('/login', [AuthController::class, 'login']); 
+
+Route::get('/categories', [CategoriesController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
 

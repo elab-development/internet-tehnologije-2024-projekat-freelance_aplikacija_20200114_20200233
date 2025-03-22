@@ -38,7 +38,7 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Nedozvoljen pristup: Samo kupac može da vidi sve projekte.'], 403);
         }
 
-        $projects = Project::with(['category', 'serviceSeller'])->paginate(10);
+        $projects = Project::with(['category', 'serviceSeller'])->paginate(4);
 
         return ProjectResource::collection($projects);
     }
@@ -74,7 +74,7 @@ class ProjectController extends Controller
 
         $projects = Project::where('title', 'LIKE', '%' . $request->input('query') . '%')
             ->with(['category', 'serviceSeller'])
-            ->paginate(10);
+            ->paginate(4);
 
         return ProjectResource::collection($projects);
     }
