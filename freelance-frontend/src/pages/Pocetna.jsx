@@ -17,7 +17,8 @@ function Pocetna() {
         alignItems: "center",
         px: { xs: 2, md: 4 },
         textAlign: "center",
-        marginBottom:"30px"
+        marginBottom:"30px",
+        marginLeft:"110px"
       }}
     >
       <Typography variant="h2" sx={{ fontWeight: "bold", mb: 2 }}>

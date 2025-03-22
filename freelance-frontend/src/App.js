@@ -5,6 +5,8 @@ import Footer from './components/Footer';
 import Prijava from './pages/Prijava';
 import Registracija from './pages/Registracija';
 import Pocetna from './pages/Pocetna';
+import Usluge from './pages/Usluge';
+import DetaljiUsluge from './pages/DetaljiUsluge';
 import "./App.css";
 
 function AppContent() {
@@ -60,8 +62,9 @@ function AppContent() {
       <Routes>
         <Route path="/" element={!userData && <Prijava />} />
         <Route path="/registracija" element={!userData && <Registracija />} />
-        <Route path="/pocetna" element={<Pocetna/>} />
-        <Route path="/usluge" element={<span>Usluge</span>} />
+        <Route path="/pocetna" element={userData && <Pocetna/>} />
+        <Route path="/usluge" element={userData && <Usluge token={userData.token}/>} />
+        <Route path="/usluge/:id" element={userData && <DetaljiUsluge token={userData.token}/>} />
         <Route path="/onama" element={<span>O Nama</span>} />
         {/* Add additional routes as needed */}
       </Routes>
