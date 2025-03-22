@@ -7,6 +7,7 @@ import Registracija from './pages/Registracija';
 import Pocetna from './pages/Pocetna';
 import Usluge from './pages/Usluge';
 import DetaljiUsluge from './pages/DetaljiUsluge';
+import ONama from './pages/ONama';
 import "./App.css";
 
 function AppContent() {
@@ -65,7 +66,7 @@ function AppContent() {
         <Route path="/pocetna" element={userData && <Pocetna/>} />
         <Route path="/usluge" element={userData && <Usluge token={userData.token}/>} />
         <Route path="/usluge/:id" element={userData && <DetaljiUsluge token={userData.token}/>} />
-        <Route path="/onama" element={<span>O Nama</span>} />
+        <Route path="/onama" element={userData && <ONama/>} />
         {/* Add additional routes as needed */}
       </Routes>
       {userData && <Footer/>}
