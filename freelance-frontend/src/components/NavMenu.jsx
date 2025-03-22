@@ -23,7 +23,10 @@ import BuildIcon from "@mui/icons-material/Build";
 import InfoIcon from "@mui/icons-material/Info";
 import LogoutIcon from "@mui/icons-material/Logout";
 
-const drawerWidth = 220;
+////////////////////////////////////////////////////////////////////////////////
+//  Adjust these two values to control your drawer widths:
+////////////////////////////////////////////////////////////////////////////////
+const drawerWidth = 150;  // Smaller expanded width
 const collapsedWidth = 70;
 
 const openedMixin = (theme) => ({
@@ -50,6 +53,7 @@ const CustomDrawer = styled(Drawer, {
   whiteSpace: "nowrap",
   boxSizing: "border-box",
   flexShrink: 0,
+  zIndex: 1000, // ensures the drawer is under the AppBar
   ...(open && {
     ...openedMixin(theme),
     "& .MuiDrawer-paper": openedMixin(theme),
@@ -81,12 +85,39 @@ const AppBar = styled(MuiAppBar, {
   }),
 }));
 
-function NavMenu({ userData, onLogout }) {
+const Main = styled("main", {
+  shouldForwardProp: (prop) => prop !== "open",
+})(({ theme, open }) => ({
+  flexGrow: 1,
+  padding: theme.spacing(3),
+  marginTop: theme.mixins.toolbar.minHeight + 8,
+  transition: theme.transitions.create("margin", {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  ...(open && {
+    marginLeft: drawerWidth,
+  }),
+  ...(!open && {
+    marginLeft: collapsedWidth,
+  }),
+}));
+
+// Custom props for bigger tooltips
+const tooltipProps = {
+  componentsProps: {
+    tooltip: {
+      sx: { fontSize: "1.1rem", p: 2 },
+    },
+  },
+};
+
+function NavMenu({ userData, onLogout, children }) {
   const { userName, userRole } = userData;
   const firstLetter = userName.charAt(0).toUpperCase();
+  const navigate = useNavigate();
 
   const [open, setOpen] = React.useState(false);
-  const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -133,18 +164,7 @@ function NavMenu({ userData, onLogout }) {
               </Typography>
             </Box>
             <Avatar sx={{ bgcolor: "#D42700", mr: 1 }}>{firstLetter}</Avatar>
-            <Tooltip
-              title="Odjavi se"
-              placement="bottom"
-              componentsProps={{
-                tooltip: {
-                  sx: {
-                    fontSize: "0.9rem",
-                    p: 1.5,
-                  },
-                },
-              }}
-            >
+            <Tooltip title="Odjavi se" placement="bottom" {...tooltipProps}>
               <IconButton onClick={onLogout} aria-label="logout">
                 <LogoutIcon sx={{ color: "#D42700" }} />
               </IconButton>
@@ -181,18 +201,7 @@ function NavMenu({ userData, onLogout }) {
                 </ListItemButton>
               ) : (
                 // Collapsed: Show icon with bigger tooltip
-                <Tooltip
-                  title={item.text}
-                  placement="right"
-                  componentsProps={{
-                    tooltip: {
-                      sx: {
-                        fontSize: "0.9rem",
-                        p: 1.5,
-                      },
-                    },
-                  }}
-                >
+                <Tooltip title={item.text} placement="right" {...tooltipProps}>
                   <ListItemButton
                     onClick={() => handleItemClick(item.route)}
                     sx={{
@@ -201,7 +210,12 @@ function NavMenu({ userData, onLogout }) {
                       px: 2.5,
                     }}
                   >
-                    <ListItemIcon sx={{ minWidth: 0, justifyContent: "center" }}>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        justifyContent: "center",
+                      }}
+                    >
                       {item.icon}
                     </ListItemIcon>
                   </ListItemButton>
@@ -212,9 +226,7 @@ function NavMenu({ userData, onLogout }) {
         </List>
       </CustomDrawer>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
-        {/* Main content area */}
-      </Box>
+      <Main open={open}>{children}</Main>
     </>
   );
 }
