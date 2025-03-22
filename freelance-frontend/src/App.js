@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import NavMenu from './components/NavMenu';
+import Footer from './components/Footer';
 import Prijava from './pages/Prijava';
 import Registracija from './pages/Registracija';
 import "./App.css";
@@ -63,6 +64,7 @@ function AppContent() {
         <Route path="/onama" element={<span>O Nama</span>} />
         {/* Add additional routes as needed */}
       </Routes>
+      {userData && <Footer/>}
     </>
   );
 }

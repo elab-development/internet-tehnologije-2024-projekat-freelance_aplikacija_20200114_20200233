@@ -134,7 +134,7 @@ function NavMenu({ userData, onLogout }) {
             </Box>
             <Avatar sx={{ bgcolor: "#D42700", mr: 1 }}>{firstLetter}</Avatar>
             <Tooltip
-              title="Logout"
+              title="Odjavi se"
               placement="bottom"
               componentsProps={{
                 tooltip: {
