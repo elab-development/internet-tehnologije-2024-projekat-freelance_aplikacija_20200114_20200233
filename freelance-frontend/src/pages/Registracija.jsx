@@ -49,7 +49,7 @@ function Registracija() {
         throw new Error(data.error || "Došlo je do greške prilikom registracije.");
       }
       alert("Uspešna registracija! Možete se sada prijaviti.");
-      navigate("/prijava");
+      navigate("/");
     } catch (error) {
       setError(error.message || "Nešto nije u redu. Pokušajte ponovo.");
     }
