@@ -218,7 +218,7 @@ function NavMenu({ userData, onLogout, children }) {
   };
 
   // Putanje na kojima ne želimo breadcrumbs
-  const hideBreadcrumbPaths = ["/", "/pocetna", "/pocetna-ponudjac"];
+  const hideBreadcrumbPaths = ["/", "/registracija", "/pocetna", "/pocetna-ponudjac"];
   const hideBreadcrumbs = hideBreadcrumbPaths.includes(location.pathname);
 
   return (
