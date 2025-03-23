@@ -4,9 +4,11 @@ import NavMenu from './components/NavMenu';
 import Footer from './components/Footer';
 import Prijava from './pages/Prijava';
 import Registracija from './pages/Registracija';
-import Pocetna from './pages/Pocetna';
-import Usluge from './pages/Usluge';
-import DetaljiUsluge from './pages/DetaljiUsluge';
+import PocetnaKupac from './pages/kupac/Pocetna';
+import PocetnaProdavac from './pages/prodavac/PocetnaProdavac';
+import MojeUsluge from './pages/prodavac/MojeUsluge';
+import UslugeKupac from './pages/kupac/Usluge';
+import DetaljiUslugeKupac from './pages/kupac/DetaljiUsluge';
 import ONama from './pages/ONama';
 import "./App.css";
 
@@ -63,9 +65,11 @@ function AppContent() {
       <Routes>
         <Route path="/" element={!userData && <Prijava />} />
         <Route path="/registracija" element={!userData && <Registracija />} />
-        <Route path="/pocetna" element={userData && <Pocetna/>} />
-        <Route path="/usluge" element={userData && <Usluge token={userData.token}/>} />
-        <Route path="/usluge/:id" element={userData && <DetaljiUsluge token={userData.token}/>} />
+        <Route path="/pocetna" element={userData && userData.userRole === "kupac" && <PocetnaKupac/>} />
+        <Route path="/pocetna-ponudjac" element={userData && userData.userRole === "ponudjac" && <PocetnaProdavac/>} />
+        <Route path="/moje-usluge" element={userData && userData.userRole === "ponudjac" && <MojeUsluge token={userData.token}/>} />
+        <Route path="/usluge" element={userData && userData.userRole === "kupac" && <UslugeKupac token={userData.token}/>} />
+        <Route path="/usluge/:id" element={userData && userData.userRole === "kupac" && <DetaljiUslugeKupac token={userData.token}/>} />
         <Route path="/onama" element={userData && <ONama/>} />
         {/* Add additional routes as needed */}
       </Routes>

@@ -49,7 +49,11 @@ function Prijava() {
       sessionStorage.setItem("userRole", user.role);
       
       alert("Uspešno ste prijavljeni!");
-      navigate("/pocetna");
+      if(user.role === "kupac"){
+        navigate("/pocetna");
+      }else{
+        navigate("/pocetna-ponudjac");
+      }
     } catch (error) {
       setError(error.message || "Došlo je do greške. Pokušajte ponovo.");
     }

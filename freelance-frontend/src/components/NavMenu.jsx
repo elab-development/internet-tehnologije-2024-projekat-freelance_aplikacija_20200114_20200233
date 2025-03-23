@@ -21,6 +21,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import HomeIcon from "@mui/icons-material/Home";
 import BuildIcon from "@mui/icons-material/Build";
 import InfoIcon from "@mui/icons-material/Info";
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
 import LogoutIcon from "@mui/icons-material/Logout";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -123,11 +124,21 @@ function NavMenu({ userData, onLogout, children }) {
     setOpen(!open);
   };
 
-  const menuItems = [
-    { text: "Početna", icon: <HomeIcon sx={{ color: "#D42700" }} />, route: "/pocetna" },
-    { text: "Usluge", icon: <BuildIcon sx={{ color: "#D42700" }} />, route: "/usluge" },
-    { text: "O Nama", icon: <InfoIcon sx={{ color: "#D42700" }} />, route: "/onama" },
-  ];
+  var menuItems = [];
+
+  if (userData.userRole === "kupac"){
+    menuItems = [
+      { text: "Početna", icon: <HomeIcon sx={{ color: "#D42700" }} />, route: "/pocetna" },
+      { text: "Usluge", icon: <BuildIcon sx={{ color: "#D42700" }} />, route: "/usluge" },
+      { text: "O Nama", icon: <InfoIcon sx={{ color: "#D42700" }} />, route: "/onama" },
+    ];
+  } else{
+    menuItems = [
+      { text: "Početna", icon: <HomeIcon sx={{ color: "#D42700" }} />, route: "/pocetna-ponudjac" },
+      { text: "Ponuda", icon: <MiscellaneousServicesIcon sx={{ color: "#D42700" }} />, route: "/moje-usluge" },
+      { text: "O Nama", icon: <InfoIcon sx={{ color: "#D42700" }} />, route: "/onama" },
+    ];
+  }
 
   const handleItemClick = (route) => {
     navigate(route);

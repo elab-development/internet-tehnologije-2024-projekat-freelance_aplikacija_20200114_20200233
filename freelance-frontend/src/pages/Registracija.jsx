@@ -145,7 +145,7 @@ function Registracija() {
               variant="text"
               startIcon={<LoginIcon />}
               className="link-button"
-              onClick={() => navigate("/prijava")}
+              onClick={() => navigate("/")}
             >
               Prijavite se
             </MuiButton>
