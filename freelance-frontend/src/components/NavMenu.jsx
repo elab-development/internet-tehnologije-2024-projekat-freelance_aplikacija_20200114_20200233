@@ -1,6 +1,6 @@
 import React from "react";
 import { styled } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link as RouterLink } from "react-router-dom";
 import {
   AppBar as MuiAppBar,
   Toolbar,
@@ -15,19 +15,21 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Breadcrumbs,
+  Link,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import HomeIcon from "@mui/icons-material/Home";
 import BuildIcon from "@mui/icons-material/Build";
 import InfoIcon from "@mui/icons-material/Info";
-import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
+import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 import LogoutIcon from "@mui/icons-material/Logout";
 
 ////////////////////////////////////////////////////////////////////////////////
-//  Adjust these two values to control your drawer widths:
+//  Podešavanje širina fioke
 ////////////////////////////////////////////////////////////////////////////////
-const drawerWidth = 150;  // Smaller expanded width
+const drawerWidth = 150;
 const collapsedWidth = 70;
 
 const openedMixin = (theme) => ({
@@ -54,7 +56,7 @@ const CustomDrawer = styled(Drawer, {
   whiteSpace: "nowrap",
   boxSizing: "border-box",
   flexShrink: 0,
-  zIndex: 1000, // ensures the drawer is under the AppBar
+  zIndex: 1000,
   ...(open && {
     ...openedMixin(theme),
     "& .MuiDrawer-paper": openedMixin(theme),
@@ -104,7 +106,7 @@ const Main = styled("main", {
   }),
 }));
 
-// Custom props for bigger tooltips
+// Za veće tooltip-ove
 const tooltipProps = {
   componentsProps: {
     tooltip: {
@@ -113,10 +115,73 @@ const tooltipProps = {
   },
 };
 
+// Mapa segmenata na čitljive nazive
+const routeNames = {
+  pocetna: "Početna",
+  "moje-usluge": "Moje Usluge",
+  onama: "O Nama",
+  usluge: "Usluge",
+};
+
+// Segmentiranje putanje "/usluge/12" => ["usluge", "12"]
+function getPathSegments(path) {
+  return path.split("/").filter((segment) => segment !== "");
+}
+
+// Komponenta Breadcrumbs
+function MyBreadcrumbs({ pathname, userData }) {
+  // npr. "/usluge/12" => ["usluge", "12"]
+  const segments = getPathSegments(pathname);
+  if (segments.length === 0) return null;
+
+  // Tvoj link na "globalnu" početnu, zavisi od role
+  const homeRoute = userData.userRole === "kupac" ? "/pocetna" : "/pocetna-ponudjac";
+
+  return (
+    <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
+      <Link component={RouterLink} underline="hover" color="inherit" to={homeRoute}>
+        Početna
+      </Link>
+
+      {segments.map((segment, index) => {
+        const isLast = index === segments.length - 1;
+        const linkTo = "/" + segments.slice(0, index + 1).join("/");
+
+        // Ako je segment broj -> "Detalji Usluge"
+        let label = routeNames[segment] || segment;
+        if (/^\d+$/.test(segment)) {
+          label = "Detalji Usluge";
+        }
+
+        if (isLast) {
+          return (
+            <Typography key={segment} color="text.primary">
+              {label}
+            </Typography>
+          );
+        } else {
+          return (
+            <Link
+              key={segment}
+              component={RouterLink}
+              underline="hover"
+              color="inherit"
+              to={linkTo}
+            >
+              {label}
+            </Link>
+          );
+        }
+      })}
+    </Breadcrumbs>
+  );
+}
+
 function NavMenu({ userData, onLogout, children }) {
   const { userName, userRole } = userData;
   const firstLetter = userName.charAt(0).toUpperCase();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [open, setOpen] = React.useState(false);
 
@@ -124,18 +189,26 @@ function NavMenu({ userData, onLogout, children }) {
     setOpen(!open);
   };
 
-  var menuItems = [];
-
-  if (userData.userRole === "kupac"){
+  // Definiši menije po role
+  let menuItems = [];
+  if (userRole === "kupac") {
     menuItems = [
       { text: "Početna", icon: <HomeIcon sx={{ color: "#D42700" }} />, route: "/pocetna" },
       { text: "Usluge", icon: <BuildIcon sx={{ color: "#D42700" }} />, route: "/usluge" },
       { text: "O Nama", icon: <InfoIcon sx={{ color: "#D42700" }} />, route: "/onama" },
     ];
-  } else{
+  } else {
     menuItems = [
-      { text: "Početna", icon: <HomeIcon sx={{ color: "#D42700" }} />, route: "/pocetna-ponudjac" },
-      { text: "Ponuda", icon: <MiscellaneousServicesIcon sx={{ color: "#D42700" }} />, route: "/moje-usluge" },
+      {
+        text: "Početna",
+        icon: <HomeIcon sx={{ color: "#D42700" }} />,
+        route: "/pocetna-ponudjac",
+      },
+      {
+        text: "Moje Usluge",
+        icon: <MiscellaneousServicesIcon sx={{ color: "#D42700" }} />,
+        route: "/moje-usluge",
+      },
       { text: "O Nama", icon: <InfoIcon sx={{ color: "#D42700" }} />, route: "/onama" },
     ];
   }
@@ -143,6 +216,10 @@ function NavMenu({ userData, onLogout, children }) {
   const handleItemClick = (route) => {
     navigate(route);
   };
+
+  // Putanje na kojima ne želimo breadcrumbs
+  const hideBreadcrumbPaths = ["/", "/pocetna", "/pocetna-ponudjac"];
+  const hideBreadcrumbs = hideBreadcrumbPaths.includes(location.pathname);
 
   return (
     <>
@@ -237,7 +314,12 @@ function NavMenu({ userData, onLogout, children }) {
         </List>
       </CustomDrawer>
 
-      <Main open={open}>{children}</Main>
+      <Main open={open}>
+        {/* Prikažemo breadcrumbs samo ako nismo na početnoj putanji */}
+        {!hideBreadcrumbs && <MyBreadcrumbs pathname={location.pathname} userData={userData} />}
+
+        {children}
+      </Main>
     </>
   );
 }
