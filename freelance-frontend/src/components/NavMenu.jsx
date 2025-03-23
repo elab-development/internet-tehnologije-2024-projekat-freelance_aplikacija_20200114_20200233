@@ -285,7 +285,7 @@ function NavMenu({ userData, onLogout, children }) {
                   >
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText primary={item.text} sx={{ color: "#333" }} />
+                  <ListItemText primary={item.text} sx={{ color: "#333", paddingLeft:"-20px" }} />
                 </ListItemButton>
               ) : (
                 // Collapsed: Show icon with bigger tooltip
