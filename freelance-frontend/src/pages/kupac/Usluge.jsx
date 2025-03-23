@@ -19,6 +19,9 @@ import { useNavigate } from "react-router-dom";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
+// 1) Importujemo hook
+import useKonvertorValuta from "../../hooks/useKonvertorValuta";
+
 const Usluge = ({ token }) => {
   const navigate = useNavigate();
 
@@ -26,16 +29,28 @@ const Usluge = ({ token }) => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
 
-  // Filters
+  // Filtriranje
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("default");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  // Pagination
+  // Pag
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 4;
 
-  // Fetch all projects (used for filtering/sorting)
+  // 2) Valuta hook
+  const { kursEurRsd, loading: loadingValuta, error: errorValuta, convertEurToRsd } =
+    useKonvertorValuta();
+
+  // 3) isEuro => da li prikažemo cene u evrima ili u dinarima
+  const [isEuro, setIsEuro] = useState(true);
+
+  // Toggluje valutu
+  const handleToggleValuta = () => {
+    setIsEuro((prev) => !prev);
+  };
+
+  // Učitavamo sve projekte (pag->all)
   useEffect(() => {
     const fetchAllProjects = async () => {
       setLoading(true);
@@ -45,12 +60,15 @@ const Usluge = ({ token }) => {
         let lastPage = 1;
 
         do {
-          const res = await fetch(`http://127.0.0.1:8000/api/kupac/projekti?page=${page}`, {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const res = await fetch(
+            `http://127.0.0.1:8000/api/kupac/projekti?page=${page}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
           const json = await res.json();
           results.push(...json.data);
@@ -89,7 +107,7 @@ const Usluge = ({ token }) => {
     fetchCategories();
   }, [token]);
 
-  // Apply filters and sorting
+  // Filtriranje, sort
   const filteredProjects = useMemo(() => {
     let filtered = [...allProjects];
 
@@ -114,7 +132,7 @@ const Usluge = ({ token }) => {
     return filtered;
   }, [allProjects, searchQuery, selectedCategory, sortOrder]);
 
-  // Paginate filtered results
+  // Paginacija
   const paginatedProjects = useMemo(() => {
     const start = (currentPage - 1) * perPage;
     return filteredProjects.slice(start, start + perPage);
@@ -122,7 +140,6 @@ const Usluge = ({ token }) => {
 
   const totalPages = Math.ceil(filteredProjects.length / perPage);
 
-  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortOrder, selectedCategory]);
@@ -130,16 +147,38 @@ const Usluge = ({ token }) => {
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
-
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, marginLeft:"150px" }}>
+    <Box sx={{ p: { xs: 2, md: 4 }, marginLeft: "150px" }}>
       <Typography variant="h4" sx={{ mb: 2, textAlign: "center" }}>
         Projekti
       </Typography>
+
+      {/* 4) Dodajmo malo polje i dugme za toggle valute */}
+      <Box sx={{ display: "flex", justifyContent: "center", mb: 2, gap: 2 }}>
+        {loadingValuta ? (
+          <CircularProgress size={24} />
+        ) : errorValuta ? (
+          <Typography color="error">{errorValuta}</Typography>
+        ) : kursEurRsd ? (
+          <Typography variant="body2" sx={{marginTop:"10px"}}>
+            Kurs: 1 EUR = {kursEurRsd.toFixed(2)} RSD
+          </Typography>
+        ) : (
+          <Typography variant="body2">Kurs nije dostupan</Typography>
+        )}
+
+        <Button
+          variant="contained"
+          onClick={handleToggleValuta}
+          sx={{ backgroundColor: "#D42700", textTransform: "none" }}
+        >
+          {isEuro ? "Prikaži u RSD" : "Prikaži u EUR"}
+        </Button>
+      </Box>
 
       {/* Filters */}
       <Box
@@ -198,40 +237,53 @@ const Usluge = ({ token }) => {
       ) : (
         <>
           <Grid container spacing={3}>
-            {paginatedProjects.map((project) => (
-              <Grid item xs={12} sm={12} md={6} key={project.id}>
-                <Card
-                  sx={{ height: "100%", display: "flex", flexDirection: "column" }}
-                >
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" gutterBottom>
-                      {project.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      {project.category ? project.category.name : "Bez kategorije"}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Cena: {project.budget} €
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Rok: {project.deadline}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      {project.description.substring(0, 100)}...
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button
-                      size="small"
-                      onClick={() => navigate(`/usluge/${project.id}`)}
-                      sx={{ textTransform: "none", color: "#D42700" }}
-                    >
-                      Detalji
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
+            {paginatedProjects.map((project) => {
+              let prikazanaCena;
+              if (isEuro) {
+                // prikaži originalnu budget valutu (EUR)
+                prikazanaCena = `${project.budget} €`;
+              } else {
+                // prikaži u RSD, pozivamo convertEurToRsd
+                const rsd = convertEurToRsd(project.budget);
+                prikazanaCena = `${rsd.toFixed(2)} RSD`;
+              }
+
+              return (
+                <Grid item xs={12} sm={12} md={6} key={project.id}>
+                  <Card
+                    sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+                  >
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Typography variant="h6" gutterBottom>
+                        {project.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        {project.category ? project.category.name : "Bez kategorije"}
+                      </Typography>
+                      {/* 5) prikažemo konvertovanu ili originalnu cenu */}
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        Cena: {prikazanaCena}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Rok: {project.deadline}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        {project.description.substring(0, 100)}...
+                      </Typography>
+                    </CardContent>
+                    <CardActions>
+                      <Button
+                        size="small"
+                        onClick={() => navigate(`/usluge/${project.id}`)}
+                        sx={{ textTransform: "none", color: "#D42700" }}
+                      >
+                        Detalji
+                      </Button>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
 
           {/* Pagination Controls */}
