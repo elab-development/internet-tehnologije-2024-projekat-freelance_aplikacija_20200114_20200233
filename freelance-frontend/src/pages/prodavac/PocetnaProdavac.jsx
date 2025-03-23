@@ -1,36 +1,37 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import Slider from "../components/Slider"; // adjust the path if needed
+import Slider from "../../components/Slider"; // Adjust the path if needed
 
-function Pocetna() {
+function PocetnaProdavac() {
   const navigate = useNavigate();
 
   return (
     <Box
       component="section"
       sx={{
-        minHeight: "calc(100vh - 120px)", // adjust according to your NavMenu/Footer heights
+        minHeight: "calc(100vh - 120px)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
         px: { xs: 2, md: 4 },
         textAlign: "center",
-        marginBottom:"30px",
-        marginLeft:"110px"
+        marginBottom: "30px",
+        marginLeft: "110px",
       }}
     >
       <Typography variant="h2" sx={{ fontWeight: "bold", mb: 2 }}>
-        Freelance Marketing: Otključajte Vaš Potencijal
+        Istaknite svoje veštine i privucite klijente
       </Typography>
+
       <Typography variant="h5" sx={{ mb: 4, maxWidth: 700 }}>
-        Dobrodošli na Promo Pulse – platformu koja spaja kreativne freelance
-        marketere sa vrhunskim poslovnim prilikama. Povežite se sa klijentima,
-        proširite svoje mogućnosti i izgradite uspešnu karijeru u svetu marketinga.
+        Pridružite se Promo Pulse zajednici i ponudite svoje usluge širom
+        tržišta. Kreirajte svoj profil, predstavite se profesionalno i budite
+        deo moderne freelance ekonomije.
       </Typography>
-      
-      {/* Reusable slider component */}
+
+      {/* Slider section */}
       <Slider />
 
       <Box
@@ -53,9 +54,9 @@ function Pocetna() {
             py: 1.5,
             "&:hover": { backgroundColor: "#c03300" },
           }}
-          onClick={() => navigate("/usluge")}
+          onClick={() => navigate("/moje-usluge")}
         >
-          Pogledaj Usluge
+          Kreiraj Uslugu
         </Button>
         <Button
           variant="outlined"
@@ -77,4 +78,4 @@ function Pocetna() {
   );
 }
 
-export default Pocetna;
+export default PocetnaProdavac;
