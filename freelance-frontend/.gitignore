@@ -5,7 +5,7 @@
 /.pnp
 .pnp.js
 
-# Ignore all GIF files
+# Ignore all GIF files, video.gif
 *.gif
 
 
