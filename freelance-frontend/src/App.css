@@ -1,0 +1,171 @@
+/* Global styles */
+body,
+html,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+  background-color: #ffffff;
+  color: #333;
+}
+
+/* Container with a GIF as a background image */
+.background-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  /* Replace 'video.gif' with your actual GIF filename if different */
+  background: url('../public/assets/video.gif') no-repeat center center;
+  background-size: cover;
+  overflow: hidden;
+}
+
+/* Content layered above the background */
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+/* Paper styling for forms */
+.prijava-paper,
+.registracija-paper {
+  width: 400px;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #eee;
+  background-color: #fff;
+}
+
+/* Logo box styling */
+.logo-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.logo-image {
+  width: 350px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Button styles with exact color and sliding shine effect */
+.prijava-button,
+.registracija-button {
+  position: relative;
+  display: inline-block;
+  background-color: #D42700 !important;
+  color: #fff !important;
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.75rem;
+  text-transform: none;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.prijava-button::before,
+.registracija-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -20%;
+  width: 20%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.15);
+  transform: skewX(-25deg);
+  transition: left 0.5s ease;
+}
+
+.prijava-button:hover::before,
+.registracija-button:hover::before {
+  left: 120%;
+}
+
+.prijava-button:hover,
+.registracija-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(212, 39, 0, 0.3);
+}
+
+/* Link-like button styling for secondary actions */
+.link-button {
+  text-transform: none;
+  background: none;
+  border: none;
+  color: #D42700;
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.link-button:hover {
+  color: #c03300;
+}
+
+/* --- NavMenu Specific Styles --- */
+
+/* AppBar styling */
+.nav-appbar {
+  background-color: #fff !important;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Toolbar layout */
+.nav-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Logo styling (centered in the AppBar) */
+.nav-logo {
+  height: 40px;
+  object-fit: contain;
+}
+
+/* User info container (right side) */
+.nav-user {
+  display: flex;
+  align-items: center;
+}
+
+/* Styling for the user’s name text */
+.nav-user-name {
+  margin-right: 8px;
+  font-size: 16px;
+  color: #333;
+}
+
+/* Avatar styling */
+.nav-avatar {
+  background-color: #D42700 !important;
+}
+
+/* Side Drawer styling */
+.nav-drawer {
+  width: 70px;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Each item in the side drawer */
+.nav-drawer-item {
+  margin-bottom: 8px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
