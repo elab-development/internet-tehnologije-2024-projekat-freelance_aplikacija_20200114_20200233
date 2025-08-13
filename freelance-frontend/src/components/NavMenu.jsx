@@ -1,6 +1,7 @@
 import React from "react";
 import { styled } from "@mui/material/styles";
 import { useNavigate, useLocation, Link as RouterLink } from "react-router-dom";
+import BarChartIcon from '@mui/icons-material/BarChart';
 import {
   AppBar as MuiAppBar,
   Toolbar,
@@ -122,6 +123,7 @@ const routeNames = {
   "moje-usluge": "Moje Usluge",
   "moji-zahtevi-ponudjac": "Moji Zahtevi",
   "moji-zahtevi": "Moji Zahtevi",
+  "statistika-ponudjac": "Statistika Zahteva",
   onama: "O Nama",
   usluge: "Usluge",
 };
@@ -217,6 +219,11 @@ function NavMenu({ userData, onLogout, children }) {
         text: "Moje Usluge",
         icon: <MiscellaneousServicesIcon sx={{ color: "#D42700" }} />,
         route: "/moje-usluge",
+      },
+      {
+        text: "Statistika Zahteva",
+        icon: <BarChartIcon sx={{ color: "#D42700" }} />,
+        route: "/statistika-ponudjac",
       },
       { text: "O Nama", icon: <InfoIcon sx={{ color: "#D42700" }} />, route: "/onama" },
     ];

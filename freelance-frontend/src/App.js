@@ -12,6 +12,7 @@ import DetaljiUslugeKupac from './pages/kupac/DetaljiUsluge';
 import ONama from './pages/ONama';
 import ProdavacZahtevi from './pages/prodavac/ProdavacZahtevi';
 import KupacZahtevi from './pages/kupac/KupacZahtevi';
+import StatistikaPonudjac from './pages/prodavac/StatistikaPonudjac';
 import "./App.css";
 
 function AppContent() {
@@ -75,6 +76,7 @@ function AppContent() {
         <Route path="/usluge" element={userData && userData.userRole === "kupac" && <UslugeKupac token={userData.token}/>} />
         <Route path="/usluge/:id" element={userData && userData.userRole === "kupac" && <DetaljiUslugeKupac token={userData.token}/>} />
         <Route path="/onama" element={userData && <ONama/>} />
+        <Route path="/statistika-ponudjac" element={userData && userData.userRole === "ponudjac" && <StatistikaPonudjac token={userData.token} />} />
         {/* Add additional routes as needed */}
       </Routes>
       {userData && <Footer/>}
