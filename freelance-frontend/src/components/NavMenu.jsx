@@ -31,7 +31,7 @@ import GavelIcon from "@mui/icons-material/Gavel";
 ////////////////////////////////////////////////////////////////////////////////
 //  Podešavanje širina fioke
 ////////////////////////////////////////////////////////////////////////////////
-const drawerWidth = 150;
+const drawerWidth = 160;
 const collapsedWidth = 70;
 
 const openedMixin = (theme) => ({
@@ -221,7 +221,7 @@ function NavMenu({ userData, onLogout, children }) {
         route: "/moje-usluge",
       },
       {
-        text: "Statistika Zahteva",
+        text: "Statistika",
         icon: <BarChartIcon sx={{ color: "#D42700" }} />,
         route: "/statistika-ponudjac",
       },
@@ -279,9 +279,9 @@ function NavMenu({ userData, onLogout, children }) {
 
       <CustomDrawer variant="permanent" open={open}>
         <Toolbar />
-        <List sx={{ mt: 2 }}>
+        <List sx={{ mt: 4 }}>
           {menuItems.map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ display: "block" }}>
+            <ListItem key={item.text} disablePadding sx={{ display: "block"}}>
               {open ? (
                 // Expanded: Show icon + text
                 <ListItemButton
