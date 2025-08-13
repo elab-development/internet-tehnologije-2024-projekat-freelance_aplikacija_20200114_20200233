@@ -22,6 +22,8 @@ class ProjectResource extends JsonResource
             'budget' => $this->budget,
             'deadline' => $this->deadline,
             'priority' => $this->priority,
+            'is_locked' => (bool) $this->is_locked,
+            'budget'    => (float) $this->budget,
             'category' => new CategoryResource($this->whenLoaded('category')), 
             'service_seller' => new UserResource($this->whenLoaded('serviceSeller')), 
             'created_at' => $this->created_at->toDateTimeString(),

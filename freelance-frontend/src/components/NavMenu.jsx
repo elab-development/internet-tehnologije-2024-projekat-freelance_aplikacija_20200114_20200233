@@ -25,6 +25,7 @@ import BuildIcon from "@mui/icons-material/Build";
 import InfoIcon from "@mui/icons-material/Info";
 import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 import LogoutIcon from "@mui/icons-material/Logout";
+import GavelIcon from "@mui/icons-material/Gavel";
 
 ////////////////////////////////////////////////////////////////////////////////
 //  Podešavanje širina fioke
@@ -119,6 +120,7 @@ const tooltipProps = {
 const routeNames = {
   pocetna: "Početna",
   "moje-usluge": "Moje Usluge",
+  "moji-zahtevi-ponudjac": "Moji Zahtevi",
   onama: "O Nama",
   usluge: "Usluge",
 };
@@ -203,6 +205,11 @@ function NavMenu({ userData, onLogout, children }) {
         text: "Početna",
         icon: <HomeIcon sx={{ color: "#D42700" }} />,
         route: "/pocetna-ponudjac",
+      },
+      {
+        text: "Moji Zahtevi",       
+        icon: <GavelIcon sx={{ color: "#D42700" }} />,
+        route: "/moji-zahtevi-ponudjac",
       },
       {
         text: "Moje Usluge",

@@ -17,8 +17,13 @@ class Request extends Model
     protected $fillable = [
         'service_buyer_id',
         'project_id',
+        'price_offer',
         'message',
         'status',
+    ];
+
+    protected $casts = [
+        'decided_at' => 'datetime',
     ];
 
     /**
@@ -28,7 +33,7 @@ class Request extends Model
     // Each request belongs to a user
     public function serviceBuyer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'service_buyer_id'); 
     }
 
     // Each request belongs to a project

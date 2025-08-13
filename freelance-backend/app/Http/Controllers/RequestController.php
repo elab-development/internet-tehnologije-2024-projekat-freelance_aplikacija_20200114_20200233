@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Request;
+use App\Models\Request as ServiceRequest;
 use App\Http\Resources\RequestResource;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\Project;
 
 class RequestController extends Controller
 {
@@ -15,37 +17,44 @@ class RequestController extends Controller
     public function store(HttpRequest $request, $projectId)
     {
         $user = Auth::user();
-
         if ($user->role !== 'kupac') {
-            return response()->json(['error' => 'Samo kupci mogu da kreiraju zahteve.'], 403);
+            return response()->json(['error' => 'Samo kupac može napraviti zahtev.'], 403);
         }
 
-        $validated = $request->validate([
-            'message' => 'required|string',
+        $project = Project::findOrFail($projectId);
+        if ($project->is_locked) {
+            return response()->json(['error' => 'Ovaj projekat je zaključan (već ima odobren zahtev).'], 422);
+        }
+
+        $data = $request->validate([
+            'message'     => ['required', 'string', 'max:2000'],
+            'price_offer' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $newRequest = Request::create([
+        $minBudget = (float) $project->budget;
+        if ((float)$data['price_offer'] < $minBudget) {
+            return response()->json([
+                'error' => "Ponuda mora biti jednaka ili veća od budžeta ({$minBudget})."
+            ], 422);
+        }
+
+        $created = ServiceRequest::create([
             'service_buyer_id' => $user->id,
-            'project_id' => $projectId,
-            'message' => $validated['message'],
-            'status' => 'obrada',
+            'project_id'       => $project->id,
+            'message'          => $data['message'],
+            'price_offer'      => $data['price_offer'],
+            'status'           => 'obrada',
         ]);
 
-        $newRequest->load('review'); // Load the review relationship
-
-        return response()->json([
-            'message' => 'Zahtev uspešno kreiran.',
-            'request' => new RequestResource($newRequest),
-        ]);
+        return response()->json(['data' => $created->fresh()], 201);
     }
-
     /**
      * Ažurira sve informacije o zahtevu osim `service_buyer_id`.
      */
     public function update(HttpRequest $request, $id)
     {
         $user = Auth::user();
-        $req = Request::find($id);
+        $req = ServiceRequest::find($id);
 
         if (!$req || $req->service_buyer_id !== $user->id) {
             return response()->json(['error' => 'Nemate dozvolu da ažurirate ovaj zahtev.'], 403);
@@ -71,23 +80,44 @@ class RequestController extends Controller
     public function updateStatus(HttpRequest $request, $id)
     {
         $user = Auth::user();
-        $req = Request::find($id);
-
-        if (!$req || $req->service_buyer_id !== $user->id) {
-            return response()->json(['error' => 'Nemate dozvolu da ažurirate status ovog zahteva.'], 403);
+        if ($user->role !== 'ponudjac') {
+            return response()->json(['error' => 'Samo ponuđač može menjati status.'], 403);
         }
 
-        $validated = $request->validate([
-            'status' => 'required|in:obrada,odobren,odbijen',
+        $data = $request->validate([
+            'status' => ['required', 'in:odobren,odbijen'],
         ]);
 
-        $req->update(['status' => $validated['status']]);
-        $req->load('review'); // Load the review relationship
+        $req = ServiceRequest::with('project')->findOrFail($id);
+        $project = $req->project;
 
-        return response()->json([
-            'message' => 'Status zahteva uspešno ažuriran.',
-            'request' => new RequestResource($req),
-        ]);
+        if ($project->service_seller_id !== $user->id) {
+            return response()->json(['error' => 'Nemate pravo na ovaj projekat.'], 403);
+        }
+
+        // If already locked and trying to approve another, block:
+        if ($project->is_locked && $data['status'] === 'odobren' && $req->status !== 'odobren') {
+            return response()->json(['error' => 'Projekat je već zaključan drugim odobrenim zahtevom.'], 422);
+        }
+
+        DB::transaction(function() use ($data, $req, $project) {
+            if ($data['status'] === 'odobren') {
+                // Approve this one
+                $req->update(['status' => 'odobren', 'decided_at' => now()]);
+                // Reject others
+                ServiceRequest::where('project_id', $project->id)
+                    ->where('id', '!=', $req->id)
+                    ->where('status', '!=', 'odbijen')
+                    ->update(['status' => 'odbijen', 'decided_at' => now()]);
+                // Lock project
+                $project->update(['is_locked' => true, 'locked_at' => now()]);
+            } else {
+                // Just reject this one
+                $req->update(['status' => 'odbijen', 'decided_at' => now()]);
+            }
+        });
+
+        return response()->json(['data' => $req->fresh('project')]);
     }
 
     /**
@@ -96,7 +126,7 @@ class RequestController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
-        $req = Request::find($id);
+        $req = ServiceRequest::find($id);
 
         if (!$req || $req->service_buyer_id !== $user->id) {
             return response()->json(['error' => 'Nemate dozvolu da obrišete ovaj zahtev.'], 403);
@@ -106,4 +136,100 @@ class RequestController extends Controller
 
         return response()->json(['message' => 'Zahtev uspešno obrisan.']);
     }
+
+    public function indexForSeller(HttpRequest $request)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'ponudjac') {
+            return response()->json(['error' => 'Samo ponuđač ima uvid.'], 403);
+        }
+
+        $query = ServiceRequest::query()
+            ->with([
+                'project:id,title,service_seller_id,budget,is_locked',
+                'serviceBuyer:id,name'
+            ])
+            ->whereHas('project', fn($q) => $q->where('service_seller_id', $user->id))
+            ->latest('id');
+
+        if ($request->filled('project_id')) {
+            $query->where('project_id', $request->integer('project_id'));
+        }
+
+        return response()->json(['data' => $query->get()]);
+    }
+
+    /**
+     * Return all requests for a given project, ordered by highest offer first,
+     * plus meta with highest bid and bidder.
+     *
+     * GET /api/kupac/projekti/{project}/requests
+     */
+    public function indexForProject(Project $project)
+    {
+        // Optional role check (keep if you only want buyers to hit this)
+        $user = Auth::user();
+        if ($user && $user->role !== 'kupac') {
+            // You can also allow both roles by removing this block.
+            // For now, buyers only:
+            return response()->json(['error' => 'Samo kupac može videti licitacije.'], 403);
+        }
+
+        // Load requests with buyer name + a bit of project info needed on FE
+        $requests = ServiceRequest::query()
+            ->with([
+                'serviceBuyer:id,name',
+                'project:id,title,budget,is_locked',
+            ])
+            ->where('project_id', $project->id)
+            ->orderByDesc('price_offer')
+            ->get([
+                'id',
+                'service_buyer_id',
+                'project_id',
+                'message',
+                'price_offer',
+                'status',
+                'created_at',
+            ]);
+
+        if ($requests->isEmpty()) {
+            // 204 No Content is fine; FE already handles this
+            return response()->noContent();
+        }
+
+        $top = $requests->first(); // ordered desc by price_offer
+
+        return response()->json([
+            'data' => $requests->map(function ($r) {
+                return [
+                    'id'             => $r->id,
+                    'project_id'     => $r->project_id,
+                    'message'        => $r->message,
+                    'price_offer'    => (float) $r->price_offer,
+                    'status'         => $r->status,
+                    'created_at'     => optional($r->created_at)->toDateTimeString(),
+                    'service_buyer'  => [
+                        'id'   => $r->service_buyer_id,
+                        'name' => optional($r->serviceBuyer)->name,
+                    ],
+                    'project' => [
+                        'id'       => $r->project->id ?? null,
+                        'title'    => $r->project->title ?? null,
+                        'budget'   => isset($r->project->budget) ? (float) $r->project->budget : null,
+                        'is_locked'=> (bool) ($r->project->is_locked ?? false),
+                    ],
+                ];
+            }),
+            'meta' => [
+                'count'          => $requests->count(),
+                'highest_bid'    => (float) $top->price_offer,
+                'highest_bidder' => [
+                    'id'   => $top->service_buyer_id,
+                    'name' => optional($top->serviceBuyer)->name,
+                ],
+            ],
+        ]);
+    }
+
 }

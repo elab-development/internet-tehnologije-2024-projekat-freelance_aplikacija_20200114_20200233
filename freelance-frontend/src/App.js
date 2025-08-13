@@ -10,6 +10,7 @@ import MojeUsluge from './pages/prodavac/MojeUsluge';
 import UslugeKupac from './pages/kupac/Usluge';
 import DetaljiUslugeKupac from './pages/kupac/DetaljiUsluge';
 import ONama from './pages/ONama';
+import ProdavacZahtevi from './pages/prodavac/ProdavacZahtevi';
 import "./App.css";
 
 function AppContent() {
@@ -67,6 +68,7 @@ function AppContent() {
         <Route path="/registracija" element={!userData && <Registracija />} />
         <Route path="/pocetna" element={userData && userData.userRole === "kupac" && <PocetnaKupac/>} />
         <Route path="/pocetna-ponudjac" element={userData && userData.userRole === "ponudjac" && <PocetnaProdavac/>} />
+        <Route path="/moji-zahtevi-ponudjac" element={userData && userData.userRole === "ponudjac" && <ProdavacZahtevi token={userData.token} />} />
         <Route path="/moje-usluge" element={userData && userData.userRole === "ponudjac" && <MojeUsluge token={userData.token}/>} />
         <Route path="/usluge" element={userData && userData.userRole === "kupac" && <UslugeKupac token={userData.token}/>} />
         <Route path="/usluge/:id" element={userData && userData.userRole === "kupac" && <DetaljiUslugeKupac token={userData.token}/>} />

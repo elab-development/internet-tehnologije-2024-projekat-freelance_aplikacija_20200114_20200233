@@ -24,6 +24,12 @@ class Project extends Model
         'priority',
     ];
 
+    protected $casts = [
+        'deadline'  => 'date:Y-m-d',
+        'is_locked' => 'boolean', 
+        'locked_at' => 'datetime',
+    ];
+
     /**
      * Relationships
      */
