@@ -241,17 +241,12 @@ class RequestController extends Controller
         $requests = ServiceRequest::query()
             ->with([
                 'project:id,title,budget,is_locked',
+                'review:id,request_id,rating,review,created_at', // <-- include review
             ])
             ->where('service_buyer_id', $user->id)
             ->latest('id')
             ->get([
-                'id',
-                'service_buyer_id',
-                'project_id',
-                'message',
-                'price_offer',
-                'status',
-                'created_at',
+                'id','service_buyer_id','project_id','message','price_offer','status','created_at',
             ]);
 
         return response()->json([
@@ -264,14 +259,21 @@ class RequestController extends Controller
                     'status'      => $r->status,
                     'created_at'  => optional($r->created_at)->toDateTimeString(),
                     'project'     => [
-                        'id'      => $r->project->id ?? null,
-                        'title'   => $r->project->title ?? null,
-                        'budget'  => isset($r->project->budget) ? (float) $r->project->budget : null,
+                        'id'        => $r->project->id ?? null,
+                        'title'     => $r->project->title ?? null,
+                        'budget'    => isset($r->project->budget) ? (float) $r->project->budget : null,
                         'is_locked' => (bool) ($r->project->is_locked ?? false),
                     ],
+                    'review' => $r->review ? [
+                        'id'         => $r->review->id,
+                        'rating'     => (int) $r->review->rating,
+                        'review'     => $r->review->review,
+                        'created_at' => optional($r->review->created_at)->toDateTimeString(),
+                    ] : null,
                 ];
             }),
         ]);
     }
+
 
 }

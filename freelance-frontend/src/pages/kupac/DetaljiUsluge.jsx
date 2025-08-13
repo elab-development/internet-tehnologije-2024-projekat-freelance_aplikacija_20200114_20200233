@@ -13,6 +13,7 @@ import {
   DialogActions,
   TextField,
   Alert,
+  Rating, // <-- added
 } from "@mui/material";
 
 const DetaljiUsluge = ({ token }) => {
@@ -37,6 +38,11 @@ const DetaljiUsluge = ({ token }) => {
 
   // Disable button if any request is approved or project is locked
   const [hasApproved, setHasApproved] = useState(false);
+
+  // ===== Added: reviews state =====
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviews, setReviews] = useState([]);
+  const [revOpen, setRevOpen] = useState(false);
 
   const fetchProjectDetails = async () => {
     setLoading(true);
@@ -92,6 +98,25 @@ const DetaljiUsluge = ({ token }) => {
     }
   };
 
+  // ===== Added: fetch reviews (avg + list) =====
+  const fetchReviews = async () => {
+    try {
+      const r = await fetch(`http://127.0.0.1:8000/api/kupac/projekti/${id}/reviews`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!r.ok) return; // silently ignore if not present
+      const json = await r.json().catch(() => ({}));
+      const list = Array.isArray(json?.data) ? json.data : [];
+      setReviews(list);
+      setAvgRating(Number(json?.meta?.avg_rating ?? 0));
+    } catch (e) {
+      console.warn("Reviews load skipped:", e?.message || e);
+    }
+  };
+
   // Compute highest bid, bidder, total count, and whether there's an approved request
   const computeStatsFromList = (list) => {
     if (!Array.isArray(list) || !list.length) return;
@@ -121,7 +146,10 @@ const DetaljiUsluge = ({ token }) => {
   };
 
   useEffect(() => {
-    fetchProjectDetails();
+    (async () => {
+      await fetchProjectDetails();
+      await fetchReviews(); // <-- added
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -194,6 +222,20 @@ const DetaljiUsluge = ({ token }) => {
           <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2 }}>
             {project.category ? project.category.name : "Bez kategorije"}
           </Typography>
+
+          {/* ===== Added: average rating (stars + number) + open modal button ===== */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+            <Rating value={avgRating || 0} precision={0.1} readOnly />
+            <Typography variant="body2">({(avgRating || 0).toFixed(1)})</Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setRevOpen(true)}
+              sx={{ ml: 1, textTransform: "none" }}
+            >
+              Pogledaj sve recenzije
+            </Button>
+          </Box>
 
           {/* Licitation banner (shown only when there are 2+ requests) */}
           {requestsCount > 1 && highestBid != null && (
@@ -297,6 +339,31 @@ const DetaljiUsluge = ({ token }) => {
           >
             {submitting ? "Slanje..." : "Pošalji"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ===== Added: All reviews modal (scrollable) ===== */}
+      <Dialog open={revOpen} onClose={() => setRevOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Recenzije</DialogTitle>
+        <DialogContent dividers sx={{ maxHeight: 420, overflow: "auto" }}>
+          {reviews.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">Još nema recenzija.</Typography>
+          ) : (
+            reviews.map((rv) => (
+              <Box key={rv.id} sx={{ mb: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Rating value={Number(rv.rating) || 0} readOnly />
+                  <Typography variant="caption" color="text.secondary">
+                    {rv.buyer?.name ? `by ${rv.buyer.name}` : ""} • {rv.created_at}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ mt: 0.5 }}>{rv.review}</Typography>
+              </Box>
+            ))
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRevOpen(false)}>Zatvori</Button>
         </DialogActions>
       </Dialog>
     </Box>

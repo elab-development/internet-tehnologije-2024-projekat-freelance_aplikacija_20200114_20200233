@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/recenzije/{requestId}', [ReviewController::class, 'store']); 
         Route::put('/recenzije/{id}', [ReviewController::class, 'update']); 
         Route::delete('/recenzije/{id}', [ReviewController::class, 'destroy']); 
+        Route::get('/projekti/{project}/reviews', [ReviewController::class, 'indexForProject']);
     });
     
     Route::post('/logout', [AuthController::class, 'logout']);

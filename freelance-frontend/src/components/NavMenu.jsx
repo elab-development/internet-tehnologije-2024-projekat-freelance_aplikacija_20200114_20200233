@@ -121,6 +121,7 @@ const routeNames = {
   pocetna: "Početna",
   "moje-usluge": "Moje Usluge",
   "moji-zahtevi-ponudjac": "Moji Zahtevi",
+  "moji-zahtevi": "Moji Zahtevi",
   onama: "O Nama",
   usluge: "Usluge",
 };
