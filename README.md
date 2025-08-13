@@ -8,6 +8,8 @@ Recenzije se vezuju za **odobren** zahtev: kupac može ostaviti ocenu (zvezdice 
 
 Stranica **„O nama“** prikazuje vrednosti i misiju platforme, kao i karticu sa nasumičnim citatom o napornom radu. Citati se dovlače sa DummyJSON, a prevod na srpski vrši se preko besplatnog javnog servisa **MyMemory** (bez API ključa), uz dugme **„Osveži citat“**. Interfejs je responzivan, sa fokusom na čitljivost i jasnoću (primarna boja #D42700). Leva fioka ima i skupljeno/rašireno stanje; širina u raširenom modu je povećana kako bi tekst stavki stao bez prelamanja.
 
+![Logo](./images/logo.png)
+
 ---
 
 ## Tehnologije
