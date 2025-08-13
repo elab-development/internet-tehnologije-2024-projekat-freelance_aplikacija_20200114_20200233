@@ -17,7 +17,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::resource('projekti', ProjectController::class)->except(['index', 'show']);
         Route::get('/projekti', [ProjectController::class, 'showMyProjects']);
         Route::get('/zahtevi', [RequestController::class, 'indexForSeller']);
-        Route::patch('/zahtevi/{id}/status', [RequestController::class, 'updateStatus']);          
+        Route::patch('/zahtevi/{id}/status', [RequestController::class, 'updateStatus']); 
+        Route::get('/zahtevi/statistika', [RequestController::class, 'statsForSeller']);
+         
     });
 
     Route::prefix('kupac')->group(function () {

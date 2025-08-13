@@ -8,6 +8,7 @@ use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Project;
+use Carbon\Carbon;
 
 class RequestController extends Controller
 {
@@ -275,5 +276,113 @@ class RequestController extends Controller
         ]);
     }
 
+    /**
+     * Statistika zahteva za ulogovanog ponuđača.
+     * Query parametri (opciono):
+     * - group_by: "day" | "month" (default: day)
+     * - days: int (default: 30)  // koristi se ako date_from nije zadat
+     * - date_from: Y-m-d
+     * - date_to:   Y-m-d
+     * - project_id: int (filter po projektu)
+     *
+     * Response:
+     * {
+     *   data: {
+     *     series: [{ bucket, ukupno, obrada, odobren, odbijen, avg_offer, avg_budget }, ...],
+     *     by_project: [{ project_id, title, ukupno, obrada, odobren, odbijen }, ...]
+     *   },
+     *   meta: { date_from, date_to, group_by, total, approved, approval_rate }
+     * }
+     */
+    public function statsForSeller(HttpRequest $request)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'ponudjac') {
+            return response()->json(['error' => 'Samo ponuđač ima uvid u statistiku.'], 403);
+        }
+
+        $groupBy   = $request->query('group_by', 'day');
+        $projectId = $request->integer('project_id');
+        $days      = (int) $request->query('days', 30);
+
+        $dateTo   = $request->query('date_to')   ? Carbon::parse($request->query('date_to'))->endOfDay() : Carbon::now()->endOfDay();
+        $dateFrom = $request->query('date_from') ? Carbon::parse($request->query('date_from'))->startOfDay() : (clone $dateTo)->subDays(max($days,1)-1)->startOfDay();
+
+        // Osnovni upit (samo projekti ovog ponuđača)
+        $base = ServiceRequest::query()
+            ->whereBetween('requests.created_at', [$dateFrom, $dateTo])
+            ->whereHas('project', fn($q) => $q->where('service_seller_id', $user->id));
+
+        if ($projectId) {
+            $base->where('project_id', $projectId);
+        }
+
+        // Grupisanje po danu/mesecu
+        $bucketExpr = $groupBy === 'month'
+            ? "DATE_FORMAT(requests.created_at, '%Y-%m-01')" // MySQL
+            : "DATE(requests.created_at)";                   // dnevno
+
+        // Serije za grafik
+        $series = (clone $base)
+            ->leftJoin('projects', 'requests.project_id', '=', 'projects.id')
+            ->selectRaw("$bucketExpr as bucket")
+            ->selectRaw("COUNT(*) as ukupno")
+            ->selectRaw("SUM(CASE WHEN requests.status = 'obrada' THEN 1 ELSE 0 END) as obrada")
+            ->selectRaw("SUM(CASE WHEN requests.status = 'odobren' THEN 1 ELSE 0 END) as odobren")
+            ->selectRaw("SUM(CASE WHEN requests.status = 'odbijen' THEN 1 ELSE 0 END) as odbijen")
+            ->selectRaw("AVG(requests.price_offer) as avg_offer")
+            ->selectRaw("AVG(projects.budget) as avg_budget")
+            ->groupBy('bucket')
+            ->orderBy('bucket')
+            ->get();
+
+        // Rezime po projektu
+        $byProject = (clone $base)
+            ->leftJoin('projects', 'requests.project_id', '=', 'projects.id')
+            ->selectRaw('requests.project_id, projects.title')
+            ->selectRaw('COUNT(*) as ukupno')
+            ->selectRaw("SUM(CASE WHEN requests.status = 'obrada' THEN 1 ELSE 0 END) as obrada")
+            ->selectRaw("SUM(CASE WHEN requests.status = 'odobren' THEN 1 ELSE 0 END) as odobren")
+            ->selectRaw("SUM(CASE WHEN requests.status = 'odbijen' THEN 1 ELSE 0 END) as odbijen")
+            ->groupBy('requests.project_id', 'projects.title')
+            ->orderByDesc('ukupno')
+            ->get();
+
+        // Meta
+        $total    = (clone $base)->count();
+        $approved = (clone $base)->where('status', 'odobren')->count();
+        $approvalRate = $total > 0 ? round($approved * 100 / $total, 2) : 0.0;
+
+        return response()->json([
+            'data' => [
+                'series' => $series->map(fn($r) => [
+                    'bucket'     => $r->bucket,
+                    'ukupno'     => (int) $r->ukupno,
+                    'obrada'     => (int) $r->obrada,
+                    'odobren'    => (int) $r->odobren,
+                    'odbijen'    => (int) $r->odbijen,
+                    'avg_offer'  => $r->avg_offer !== null  ? round((float)$r->avg_offer, 2)  : null,
+                    'avg_budget' => $r->avg_budget !== null ? round((float)$r->avg_budget, 2) : null,
+                ]),
+                'by_project' => $byProject->map(fn($r) => [
+                    'project_id' => (int) $r->project_id,
+                    'title'      => $r->title,
+                    'ukupno'     => (int) $r->ukupno,
+                    'obrada'     => (int) $r->obrada,
+                    'odobren'    => (int) $r->odobren,
+                    'odbijen'    => (int) $r->odbijen,
+                ]),
+            ],
+            'meta' => [
+                'date_from'     => $dateFrom->toDateString(),
+                'date_to'       => $dateTo->toDateString(),
+                'group_by'      => $groupBy,
+                'total'         => $total,
+                'approved'      => $approved,
+                'approval_rate' => $approvalRate,
+                'project_id'    => $projectId,
+            ],
+        ]);
+    }
 
 }
