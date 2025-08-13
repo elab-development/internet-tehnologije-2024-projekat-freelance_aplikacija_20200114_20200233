@@ -69,14 +69,6 @@ export default function StatistikaPonudjac({ token }) {
           sx={{ width: 160 }}
         />
 
-        <TextField
-          size="small"
-          label="Project ID (opciono)"
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-          sx={{ width: 200 }}
-        />
-
         <Button variant="contained" onClick={load} sx={{ bgcolor: "#D42700", "&:hover": { bgcolor: "#b31e00" } }}>
           Primeni
         </Button>

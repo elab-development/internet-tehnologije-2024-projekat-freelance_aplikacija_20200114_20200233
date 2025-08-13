@@ -76,6 +76,36 @@ export default function ProdavacZahtevi({ token }) {
     }
   };
 
+  // === ADD: Export PDF handler ===
+  const exportPdf = async () => {
+    setErr("");
+    if (!token) { setErr("Nedostaje token (niste prijavljeni)."); return; }
+    try {
+      const res = await fetch(`${API_BASE}/ponudjac/zahtevi/export-pdf`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        let msg = "Greška pri izvozu PDF-a.";
+        try { msg = JSON.parse(text)?.error || JSON.parse(text)?.message || msg; } catch {}
+        throw new Error(msg);
+      }
+
+      const blob = await res.blob(); // expected application/pdf
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `zahtevi_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setErr(e.message || "Greška pri izvozu PDF-a.");
+    }
+  };
+
   const chip = (s) => (
     <Chip
       size="small"
@@ -101,6 +131,17 @@ export default function ProdavacZahtevi({ token }) {
     >
       <Typography variant="h5" sx={{ mb: 2 }}>Moji Zahtevi</Typography>
       {err && <Alert severity="error" sx={{ mb: 2 }}>{err}</Alert>}
+
+      {/* === ADD: Export button (keeps layout) === */}
+      <Box sx={{ width: "100%", maxWidth: 1100, display: "flex", justifyContent: "flex-end", mb: 1 }}>
+        <Button
+          variant="contained"
+          onClick={exportPdf}
+          sx={{ textTransform: "none", bgcolor: "#D42700", "&:hover": { bgcolor: "#b31e00" } }}
+        >
+          Export PDF
+        </Button>
+      </Box>
 
       <Table>
         <TableHead>
