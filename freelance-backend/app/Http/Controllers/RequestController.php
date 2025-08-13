@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Project;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RequestController extends Controller
 {
@@ -383,6 +384,49 @@ class RequestController extends Controller
                 'project_id'    => $projectId,
             ],
         ]);
+    }
+
+    /**
+     * Export all seller's requests to PDF.
+     * Optional query params: ?status=obrada|odobren|odbijen&date_from=YYYY-MM-DD&date_to=YYYY-MM-DD
+     */
+    public function exportPdf(HttpRequest $request)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'ponudjac') {
+            return response()->json(['error' => 'Samo ponuđač može izvesti zahteve.'], 403);
+        }
+
+        $status    = $request->query('status'); // optional
+        $dateFrom  = $request->query('date_from') ? Carbon::parse($request->query('date_from'))->startOfDay() : null;
+        $dateTo    = $request->query('date_to')   ? Carbon::parse($request->query('date_to'))->endOfDay()   : null;
+
+        $rows = ServiceRequest::query()
+            ->with([
+                'project:id,title,budget,service_seller_id',
+                'serviceBuyer:id,name',
+            ])
+            ->whereHas('project', fn($q) => $q->where('service_seller_id', $user->id))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($dateFrom && $dateTo, fn($q) => $q->whereBetween('created_at', [$dateFrom, $dateTo]))
+            ->orderByDesc('id')
+            ->get([
+                'id','project_id','service_buyer_id','message','price_offer','status','created_at'
+            ]);
+
+        $period = $dateFrom && $dateTo
+            ? $dateFrom->toDateString() . ' – ' . $dateTo->toDateString()
+            : 'Svi zapisi';
+
+        $pdf = Pdf::loadView('pdf.requests', [
+            'rows'   => $rows,
+            'seller' => $user,
+            'period' => $period,
+        ])->setPaper('a4', 'landscape');
+
+        // download filename:
+        $filename = 'zahtevi_' . now()->format('Ymd_His') . '.pdf';
+        return $pdf->download($filename);
     }
 
 }

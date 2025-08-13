@@ -19,7 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/zahtevi', [RequestController::class, 'indexForSeller']);
         Route::patch('/zahtevi/{id}/status', [RequestController::class, 'updateStatus']); 
         Route::get('/zahtevi/statistika', [RequestController::class, 'statsForSeller']);
-         
+        Route::get('/zahtevi/export-pdf', [RequestController::class, 'exportPdf']);
     });
 
     Route::prefix('kupac')->group(function () {
