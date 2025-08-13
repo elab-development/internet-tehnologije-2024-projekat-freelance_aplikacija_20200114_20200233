@@ -27,7 +27,8 @@ Route::middleware('auth:sanctum')->group(function () {
         
 
         Route::post('/zahtevi/{projectId}', [RequestController::class, 'store']); 
-        Route::put('/zahtevi/{id}', [RequestController::class, 'update']); 
+        Route::patch('/zahtevi/{id}', [RequestController::class, 'update']); 
+        Route::get('/zahtevi', [RequestController::class, 'indexForBuyer']);
         
         Route::delete('/zahtevi/{id}', [RequestController::class, 'destroy']); 
         Route::get('/projekti/{project}/requests', [RequestController::class, 'indexForProject']);

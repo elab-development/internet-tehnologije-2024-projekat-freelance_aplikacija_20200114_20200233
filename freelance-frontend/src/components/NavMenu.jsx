@@ -198,6 +198,7 @@ function NavMenu({ userData, onLogout, children }) {
       { text: "Početna", icon: <HomeIcon sx={{ color: "#D42700" }} />, route: "/pocetna" },
       { text: "Usluge", icon: <BuildIcon sx={{ color: "#D42700" }} />, route: "/usluge" },
       { text: "O Nama", icon: <InfoIcon sx={{ color: "#D42700" }} />, route: "/onama" },
+      { text: "Moji Zahtevi", icon: <GavelIcon sx={{ color: "#D42700" }} />, route: "/moji-zahtevi" },
     ];
   } else {
     menuItems = [

@@ -232,7 +232,7 @@ const DetaljiUsluge = ({ token }) => {
               "&:hover": { bgcolor: "#b31e00" },
             }}
           >
-            Make a Request
+            Napravi Zahtev
           </Button>
 
           <Button

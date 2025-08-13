@@ -62,7 +62,6 @@ class RequestController extends Controller
 
         $validated = $request->validate([
             'message' => 'string',
-            'status' => 'in:obrada,odobren,odbijen',
         ]);
 
         $req->update($validated);
@@ -229,6 +228,49 @@ class RequestController extends Controller
                     'name' => optional($top->serviceBuyer)->name,
                 ],
             ],
+        ]);
+    }
+
+    public function indexForBuyer(HttpRequest $request)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'kupac') {
+            return response()->json(['error' => 'Samo kupac ima uvid u svoje zahteve.'], 403);
+        }
+
+        $requests = ServiceRequest::query()
+            ->with([
+                'project:id,title,budget,is_locked',
+            ])
+            ->where('service_buyer_id', $user->id)
+            ->latest('id')
+            ->get([
+                'id',
+                'service_buyer_id',
+                'project_id',
+                'message',
+                'price_offer',
+                'status',
+                'created_at',
+            ]);
+
+        return response()->json([
+            'data' => $requests->map(function ($r) {
+                return [
+                    'id'          => $r->id,
+                    'project_id'  => $r->project_id,
+                    'message'     => $r->message,
+                    'price_offer' => (float) $r->price_offer,
+                    'status'      => $r->status,
+                    'created_at'  => optional($r->created_at)->toDateTimeString(),
+                    'project'     => [
+                        'id'      => $r->project->id ?? null,
+                        'title'   => $r->project->title ?? null,
+                        'budget'  => isset($r->project->budget) ? (float) $r->project->budget : null,
+                        'is_locked' => (bool) ($r->project->is_locked ?? false),
+                    ],
+                ];
+            }),
         ]);
     }
 

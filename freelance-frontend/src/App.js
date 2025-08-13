@@ -11,6 +11,7 @@ import UslugeKupac from './pages/kupac/Usluge';
 import DetaljiUslugeKupac from './pages/kupac/DetaljiUsluge';
 import ONama from './pages/ONama';
 import ProdavacZahtevi from './pages/prodavac/ProdavacZahtevi';
+import KupacZahtevi from './pages/kupac/KupacZahtevi';
 import "./App.css";
 
 function AppContent() {
@@ -70,6 +71,7 @@ function AppContent() {
         <Route path="/pocetna-ponudjac" element={userData && userData.userRole === "ponudjac" && <PocetnaProdavac/>} />
         <Route path="/moji-zahtevi-ponudjac" element={userData && userData.userRole === "ponudjac" && <ProdavacZahtevi token={userData.token} />} />
         <Route path="/moje-usluge" element={userData && userData.userRole === "ponudjac" && <MojeUsluge token={userData.token}/>} />
+        <Route path="/moji-zahtevi" element={userData && userData.userRole === "kupac" && <KupacZahtevi token={userData.token} />} />
         <Route path="/usluge" element={userData && userData.userRole === "kupac" && <UslugeKupac token={userData.token}/>} />
         <Route path="/usluge/:id" element={userData && userData.userRole === "kupac" && <DetaljiUslugeKupac token={userData.token}/>} />
         <Route path="/onama" element={userData && <ONama/>} />
