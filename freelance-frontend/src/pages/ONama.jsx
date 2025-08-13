@@ -10,15 +10,19 @@ import {
   useMediaQuery,
   useTheme,
   Fade,
+  Button, // <-- added
 } from "@mui/material";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import GroupsIcon from "@mui/icons-material/Groups";
 import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
+import useCitat from "../hooks/useCitat"; // <-- added
 
 const ONama = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const { quote, author, loading, error, refresh } = useCitat(); // <-- added
 
   const values = [
     {
@@ -82,9 +86,7 @@ const ONama = () => {
                   boxShadow: 4,
                   borderRadius: 3,
                   transition: "transform 0.3s",
-                  "&:hover": {
-                    transform: "scale(1.03)",
-                  }
+                  "&:hover": { transform: "scale(1.03)" }
                 }}
               >
                 <CardContent>
@@ -113,14 +115,65 @@ const ONama = () => {
         ))}
       </Grid>
 
+      {/* === New: Citat card (same width as one column sm=6) === */}
+      <Grid container justifyContent="center" sx={{ mt: 2 }}>
+        <Grid item xs={12} sm={6}>
+          <Fade in timeout={600}>
+            <Card
+              sx={{
+                p: 3,
+                boxShadow: 4,
+                borderRadius: 3,
+                transition: "transform 0.3s",
+                "&:hover": { transform: "scale(1.03)" }
+              }}
+            >
+              <CardContent>
+                <Typography variant="overline" color="text.secondary">
+                  Citat o napornom radu
+                </Typography>
+
+                {loading && (
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    Učitavanje citata...
+                  </Typography>
+                )}
+
+                {error && (
+                  <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                    {error}
+                  </Typography>
+                )}
+
+                {!loading && !error && (
+                  <>
+                    <Typography variant="h6" sx={{ mt: 1, fontStyle: "italic" }}>
+                      “{quote}”
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 1 }} align="right">
+                      — {author}
+                    </Typography>
+                  </>
+                )}
+
+                <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                  <Button
+                    size="small"
+                    onClick={refresh}
+                    sx={{ textTransform: "none", color: "#D42700" }}
+                  >
+                    Osveži citat
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Fade>
+        </Grid>
+      </Grid>
+
       <Divider sx={{ my: 6 }} />
 
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        align="center"
-        sx={{ mt: 4 }}
-      >
+      <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
         © {new Date().getFullYear()} Promo Pulse – Sva prava zadržana.
       </Typography>
     </Box>
