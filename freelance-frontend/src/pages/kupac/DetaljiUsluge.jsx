@@ -13,8 +13,17 @@ import {
   DialogActions,
   TextField,
   Alert,
-  Rating, // <-- added
+  Rating,
 } from "@mui/material";
+
+const API = "http://127.0.0.1:8000/api";
+
+function toNum(v) {
+  // prihvati broj ili string, skini eventualne razmake/simbol €
+  if (typeof v === "number") return v;
+  if (typeof v === "string") return parseFloat(v.replace(/[^\d.,-]/g, "").replace(",", "."));
+  return NaN;
+}
 
 const DetaljiUsluge = ({ token }) => {
   const { id } = useParams();
@@ -31,108 +40,43 @@ const DetaljiUsluge = ({ token }) => {
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
 
-  // Licitation banner state
+  // Licitation state
+  const [reqs, setReqs] = useState([]);
   const [highestBid, setHighestBid] = useState(null);
   const [highestBidder, setHighestBidder] = useState("");
   const [requestsCount, setRequestsCount] = useState(0);
-
-  // Disable button if any request is approved or project is locked
   const [hasApproved, setHasApproved] = useState(false);
 
-  // ===== Added: reviews state =====
+  // Reviews
   const [avgRating, setAvgRating] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [revOpen, setRevOpen] = useState(false);
 
-  const fetchProjectDetails = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/api/kupac/projekti/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const contentType = res.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        const data = await res.json();
-        const proj = data.data || data;
-        setProject(proj);
-
-        // If project already carries requests, compute from there; otherwise load via dedicated route
-        if (Array.isArray(proj.requests) && proj.requests.length) {
-          computeStatsFromList(proj.requests);
-        } else {
-          await fetchLicitacija(); // will set highest/approved if route exists
-        }
-
-        // Respect project.is_locked if backend exposes it
-        if (proj?.is_locked) setHasApproved(true);
-      } else {
-        const text = await res.text();
-        console.error("Project details response is not JSON:", text);
-      }
-    } catch (error) {
-      console.error("Error fetching project details:", error);
-    } finally {
-      setLoading(false);
+  // ---- helpers ---------------------------------------------------------------
+  const computeStatsFromList = (list, lock = false) => {
+    if (!Array.isArray(list) || list.length === 0) {
+      setRequestsCount(0);
+      setHighestBid(null);
+      setHighestBidder("");
+      setHasApproved(Boolean(lock));
+      return;
     }
-  };
 
-  // Load all requests for this project (licitations)
-  const fetchLicitacija = async () => {
-    try {
-      const r = await fetch(`http://127.0.0.1:8000/api/kupac/projekti/${id}/requests`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!r.ok) return; // If route not available yet, skip silently
-      const json = await r.json().catch(() => ({}));
-      const list = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
-      if (list.length) computeStatsFromList(list);
-    } catch (e) {
-      console.warn("Licitacija load skipped:", e?.message || e);
-    }
-  };
+    const normalized = list.map((r) => ({
+      ...r,
+      price_offer: toNum(r?.price_offer),
+    }));
 
-  // ===== Added: fetch reviews (avg + list) =====
-  const fetchReviews = async () => {
-    try {
-      const r = await fetch(`http://127.0.0.1:8000/api/kupac/projekti/${id}/reviews`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!r.ok) return; // silently ignore if not present
-      const json = await r.json().catch(() => ({}));
-      const list = Array.isArray(json?.data) ? json.data : [];
-      setReviews(list);
-      setAvgRating(Number(json?.meta?.avg_rating ?? 0));
-    } catch (e) {
-      console.warn("Reviews load skipped:", e?.message || e);
-    }
-  };
+    setRequestsCount(normalized.length);
 
-  // Compute highest bid, bidder, total count, and whether there's an approved request
-  const computeStatsFromList = (list) => {
-    if (!Array.isArray(list) || !list.length) return;
+    // approved?
+    const approvedExists = normalized.some((r) => r?.status === "odobren");
+    setHasApproved(approvedExists || Boolean(lock));
 
-    setRequestsCount(list.length);
-
-    // If any is approved, disable button
-    const approvedExists = list.some((r) => r?.status === "odobren");
-    if (approvedExists) setHasApproved(true);
-
-    // Highest bid
-    const maxReq = list.reduce((acc, cur) => {
-      const a = Number(acc?.price_offer ?? -Infinity);
-      const b = Number(cur?.price_offer ?? -Infinity);
-      return b > a ? cur : acc;
-    }, null);
+    // highest bid
+    const maxReq = normalized.reduce((acc, cur) =>
+      (acc?.price_offer ?? -Infinity) < (cur?.price_offer ?? -Infinity) ? cur : acc
+    );
 
     const bidderName =
       maxReq?.service_buyer?.name ||
@@ -145,17 +89,104 @@ const DetaljiUsluge = ({ token }) => {
     setHighestBidder(bidderName);
   };
 
+  // ---- API load --------------------------------------------------------------
+  const fetchProjectDetails = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/kupac/projekti/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Greška pri učitavanju projekta (${res.status}).`);
+      }
+      const data = await res.json();
+      const proj = data.data || data;
+      setProject(proj);
+
+      // ako backend vraća proj.requests – koristi ih; inače pokupi preko rute
+      if (Array.isArray(proj.requests) && proj.requests.length) {
+        setReqs(proj.requests);
+        computeStatsFromList(proj.requests, proj?.is_locked);
+      } else {
+        await fetchLicitacija(proj?.is_locked);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLicitacija = async (lockFlag = false) => {
+    try {
+      const r = await fetch(`${API}/kupac/projekti/${id}/requests`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (r.status === 204) {
+        setReqs([]);
+        computeStatsFromList([], lockFlag);
+        return;
+      }
+      if (!r.ok) throw new Error(`Greška pri učitavanju zahteva (${r.status}).`);
+
+      const json = await r.json().catch(() => ({}));
+      const list = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
+      setReqs(list);
+      computeStatsFromList(list, lockFlag);
+    } catch (e) {
+      console.warn("Licitacija load skipped:", e?.message || e);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const r = await fetch(`${API}/kupac/projekti/${id}/reviews`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (r.status === 204) {
+        setReviews([]);
+        setAvgRating(0);
+        return;
+      }
+      if (!r.ok) return;
+      const json = await r.json().catch(() => ({}));
+      const list = Array.isArray(json?.data) ? json.data : [];
+      setReviews(list);
+      setAvgRating(Number(json?.meta?.avg_rating ?? 0));
+    } catch (e) {
+      console.warn("Reviews load skipped:", e?.message || e);
+    }
+  };
+
   useEffect(() => {
+    setReqs([]);
+    setHasApproved(false);
+    setRequestsCount(0);
+    setHighestBid(null);
+    setHighestBidder("");
     (async () => {
       await fetchProjectDetails();
-      await fetchReviews(); // <-- added
+      await fetchReviews();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // ---- create offer ----------------------------------------------------------
   const handleOpen = () => {
+    const b = toNum(project?.budget ?? 0);
     setMessage("");
-    setPrice(Number(project?.budget ?? 0));
+    setPrice(Number.isFinite(highestBid) ? Math.max(b, highestBid) : b);
     setErr("");
     setOk("");
     setOpen(true);
@@ -167,36 +198,47 @@ const DetaljiUsluge = ({ token }) => {
     setErr("");
     setOk("");
 
-    const budget = Number(project?.budget ?? 0);
-    const offer = Number(price);
+    const budget = toNum(project?.budget ?? 0);
+    const offer = toNum(price);
 
-    if (Number.isNaN(offer) || offer < budget) {
-      setErr(`Ponuda (price offer) mora biti ≥ budžet (${budget}).`);
+    if (!Number.isFinite(offer) || offer < budget) {
+      setErr(`Ponuda mora biti broj i ≥ budžet (${budget}).`);
       return;
     }
 
     try {
       setSubmitting(true);
-      // NOTE: using kupac namespace as per your recent code
-      const res = await fetch(`http://127.0.0.1:8000/api/kupac/zahtevi/${project.id}`, {
+      const res = await fetch(`${API}/kupac/zahtevi/${project.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          message,
-          price_offer: offer,
-        }),
+        body: JSON.stringify({ message, price_offer: offer }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data?.error || "Greška pri slanju zahteva.");
-      }
-      setOk("Zahtev je uspešno poslat.");
 
-      // Refresh licitation stats after submit
-      await fetchLicitacija();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Greška pri slanju zahteva.");
+
+      setOk("Zahtev je uspešno poslat.");
+      setOpen(false);
+
+      // optimistički dodaj novi zahtev u lokalnu listu da baner odmah proradi
+      const created = data?.data || data || {};
+      const normalized = {
+        id: created.id,
+        price_offer: toNum(created.price_offer ?? offer),
+        status: created.status || "obrada",
+        service_buyer: { id: created.service_buyer_id, name: sessionStorage.getItem("userName") },
+      };
+      setReqs((prev) => {
+        const next = [normalized, ...prev];
+        computeStatsFromList(next, project?.is_locked);
+        return next;
+      });
+
+      // potvrdi stanje sa servera
+      await fetchLicitacija(project?.is_locked);
     } catch (e) {
       setErr(e.message || "Greška pri slanju zahteva.");
     } finally {
@@ -223,7 +265,7 @@ const DetaljiUsluge = ({ token }) => {
             {project.category ? project.category.name : "Bez kategorije"}
           </Typography>
 
-          {/* ===== Added: average rating (stars + number) + open modal button ===== */}
+          {/* prosečna ocena */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
             <Rating value={avgRating || 0} precision={0.1} readOnly />
             <Typography variant="body2">({(avgRating || 0).toFixed(1)})</Typography>
@@ -237,10 +279,12 @@ const DetaljiUsluge = ({ token }) => {
             </Button>
           </Box>
 
-          {/* Licitation banner (shown only when there are 2+ requests) */}
-          {requestsCount > 1 && highestBid != null && (
+          {/* licitacioni baner */}
+          {requestsCount >= 1 && Number.isFinite(highestBid) && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              Licitacija: Trenutno najviša ponuda je <b>{highestBid.toFixed(2)} €</b> (kupac: <b>{highestBidder}</b>). Ukupno zahteva: {requestsCount}.
+              Licitacija: Trenutno najviša ponuda je{" "}
+              <b>{highestBid.toFixed(2)} €</b> (kupac: <b>{highestBidder}</b>). Ukupno zahteva:{" "}
+              {requestsCount}.
             </Alert>
           )}
 
@@ -248,7 +292,7 @@ const DetaljiUsluge = ({ token }) => {
             {project.description}
           </Typography>
           <Typography variant="body2" sx={{ mb: 1 }}>
-            Cena: {project.budget} €
+            Cena: {toNum(project.budget)} €
           </Typography>
           <Typography variant="body2" sx={{ mb: 1 }}>
             Rok: {project.deadline}
@@ -261,9 +305,8 @@ const DetaljiUsluge = ({ token }) => {
           </Typography>
         </CardContent>
 
-        {/* Buttons row — same layout; button disabled if approved exists or project locked */}
+        {/* dugmad */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, p: 2 }}>
-          {/* Disable if approved exists or project is locked */}
           <Button
             variant="contained"
             onClick={handleOpen}
@@ -287,12 +330,12 @@ const DetaljiUsluge = ({ token }) => {
         </Box>
       </Card>
 
-      {/* Modal dialog */}
+      {/* modal: novi zahtev */}
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>Napravi zahtev</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Typography variant="body2" sx={{ mb: 1 }}>
-            Budžet projekta: <b>{Number(project?.budget ?? 0)}</b> €
+            Budžet projekta: <b>{toNum(project?.budget ?? 0)}</b> €
           </Typography>
 
           <TextField
@@ -308,10 +351,10 @@ const DetaljiUsluge = ({ token }) => {
           <TextField
             label="Vaša ponuda (price offer) €"
             type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            value={Number.isFinite(price) ? price : ""}
+            onChange={(e) => setPrice(Number.isFinite(e.target.valueAsNumber) ? e.target.valueAsNumber : toNum(e.target.value))}
             fullWidth
-            inputProps={{ min: Number(project?.budget ?? 0), step: "0.01" }}
+            inputProps={{ min: toNum(project?.budget ?? 0), step: "0.01" }}
             sx={{ mt: 2 }}
           />
 
@@ -332,32 +375,33 @@ const DetaljiUsluge = ({ token }) => {
             variant="contained"
             onClick={handleSubmit}
             disabled={submitting}
-            sx={{
-              bgcolor: "#D42700",
-              "&:hover": { bgcolor: "#b31e00" },
-            }}
+            sx={{ bgcolor: "#D42700", "&:hover": { bgcolor: "#b31e00" } }}
           >
             {submitting ? "Slanje..." : "Pošalji"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* ===== Added: All reviews modal (scrollable) ===== */}
+      {/* modal: sve recenzije */}
       <Dialog open={revOpen} onClose={() => setRevOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Recenzije</DialogTitle>
         <DialogContent dividers sx={{ maxHeight: 420, overflow: "auto" }}>
           {reviews.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">Još nema recenzija.</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Još nema recenzija.
+            </Typography>
           ) : (
             reviews.map((rv) => (
               <Box key={rv.id} sx={{ mb: 2 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Rating value={Number(rv.rating) || 0} readOnly />
+                  <Rating value={toNum(rv.rating) || 0} readOnly />
                   <Typography variant="caption" color="text.secondary">
                     {rv.buyer?.name ? `by ${rv.buyer.name}` : ""} • {rv.created_at}
                   </Typography>
                 </Box>
-                <Typography variant="body2" sx={{ mt: 0.5 }}>{rv.review}</Typography>
+                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                  {rv.review}
+                </Typography>
               </Box>
             ))
           )}
